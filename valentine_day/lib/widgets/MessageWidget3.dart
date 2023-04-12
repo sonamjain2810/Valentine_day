@@ -21,7 +21,7 @@ class MessageWidget3 extends StatelessWidget {
       padding: EdgeInsets.only(right: SizeConfig.width(10.0)),
       child: Container(
         width: SizeConfig.width(180),
-        height: SizeConfig.height(164),
+        height: SizeConfig.height(180),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.all(Radius.circular(SizeConfig.width(5))),
