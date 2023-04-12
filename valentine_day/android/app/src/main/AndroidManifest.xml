@@ -4,6 +4,10 @@
         android:label="valentine_day"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8179797674906935~5631234425"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
