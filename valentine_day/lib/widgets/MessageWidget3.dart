@@ -27,7 +27,7 @@ class MessageWidget3 extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(SizeConfig.width(5))),
           boxShadow: [
             BoxShadow(
-              offset: Offset(4, 4),
+              offset: const Offset(4, 4),
               blurRadius: 3,
               color: Colors.grey.withOpacity(0.50),
             )
@@ -67,7 +67,7 @@ class MessageWidget3 extends StatelessWidget {
                     ),
                     Text(
                       subTitle!,
-                      style: Theme.of(context).textTheme.subtitle2,
+                      //style: Theme.of(context).textTheme.subtitle2,
                       maxLines: 3,
                       textAlign: TextAlign.center,
                     ),

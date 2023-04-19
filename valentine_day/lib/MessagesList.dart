@@ -83,7 +83,7 @@ class _MessagesListState extends State<MessagesList> {
       appBar: AppBar(
         title: Text(
           "Message List",
-          style: Theme.of(context).appBarTheme.textTheme?.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(
@@ -115,7 +115,7 @@ class _MessagesListState extends State<MessagesList> {
                                 border: Border.all(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .primaryVariant,
+                                      .onPrimaryContainer,
                                 ),
                                 borderRadius:
                                     // 40 /8.98 = 4.46

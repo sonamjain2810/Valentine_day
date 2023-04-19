@@ -54,7 +54,7 @@ class _GifsImagesState extends State<GifsImages> {
       appBar: AppBar(
         title: Text(
           "Gif Images",
-          style: Theme.of(context).appBarTheme.textTheme!.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(

@@ -52,7 +52,7 @@ class _QuotesListState extends State<QuotesList> {
       appBar: AppBar(
         title: Text(
           "Quotes List",
-          style: Theme.of(context).appBarTheme.textTheme?.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(
@@ -83,7 +83,7 @@ class _QuotesListState extends State<QuotesList> {
                                 border: Border.all(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .primaryVariant,
+                                      .onPrimaryContainer,
                                 ),
                                 borderRadius:
                                     // 40 /8.98 = 4.46

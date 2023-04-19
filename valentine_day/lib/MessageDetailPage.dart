@@ -92,7 +92,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
           appBar: AppBar(
               title: Text(
             "Message No. ${index + 1}",
-            style: Theme.of(context).appBarTheme.textTheme?.headline1,
+            style: Theme.of(context).appBarTheme.toolbarTextStyle,
           )),
           body: SafeArea(
             child: Padding(

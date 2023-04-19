@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'utils/SizeConfig.dart';
@@ -8,24 +9,24 @@ class AppTheme {
 
   // yaha per sab color define kiye hai jo hame ThemeData me use karege light Theme.
   static const Color _lightIconColor = Colors.grey;
-  static Color? _lightPrimaryColor = Colors.blueGrey[900];
-  static Color? _lightPrimaryVariantColor = Colors.pink[900];
+  static final Color? _lightPrimaryColor = Colors.blueGrey[900];
+  static final Color? _lightPrimaryVariantColor = Colors.pink[900];
   static const Color _lightSecondaryColor = Colors.grey;
   static const Color _lightOnPrimaryColor = Colors.white;
-  static Color _lightPrimaryIconThemeColor = Colors.white;
+  static const Color _lightPrimaryIconThemeColor = Colors.white;
   static const Color _lightButtonTextColor = Colors.white;
-  static Color? _lightButtonColor = Colors.pink[400];
-  static Color? _lightButtonSplashColor = Colors.purpleAccent[700];
+  static final Color? _lightButtonColor = Colors.pink[400];
+  static final Color? _lightButtonSplashColor = Colors.purpleAccent[700];
   static const Color _lightAppBarTextColor = Colors.white;
   static const Color _lightDividerColor = Colors.black;
-  static Color? _lightCardColor = Colors.pink[700];
+  static final Color? _lightCardColor = Colors.pink[700];
   static const Color _lightShadowColor = Colors.grey;
 
 // yaha per sab color define kiye hai jo hame ThemeData me use karege dark Theme.
 
-  static Color _darkIconColor = Colors.white;
+  static const Color _darkIconColor = Colors.white;
   static const Color _darkPrimaryColor = Colors.black;
-  static Color? _darkPrimaryVariantColor = Colors.grey[800];
+  static final Color? _darkPrimaryVariantColor = Colors.grey[800];
   static const Color _darkSecondaryColor = Colors.white;
   static const Color _darkOnPrimaryColor = Colors.white;
   static const Color _darkPrimaryIconThemeColor = Colors.red;
@@ -44,25 +45,27 @@ class AppTheme {
     // AppBar
     appBarTheme: AppBarTheme(
       color: _lightPrimaryVariantColor,
-      textTheme: _lightAppBarTextTextTheme,
+      //textTheme: _lightAppBarTextTextTheme,
+      toolbarTextStyle: _lightAppBarTextTextTheme.headline1,
       elevation: 8.0,
-      iconTheme: IconThemeData(
+      iconTheme: const IconThemeData(
         color: _lightPrimaryIconThemeColor,
       ),
     ),
 
     colorScheme: ColorScheme.light(
       primary: _lightPrimaryColor!,
-      primaryVariant: _lightPrimaryVariantColor,
+      //primaryVariant: _lightPrimaryVariantColor,
+      primaryContainer: _lightPrimaryVariantColor,
       secondary: _lightSecondaryColor,
       onPrimary: _lightOnPrimaryColor,
     ),
 
-    iconTheme: IconThemeData(
+    iconTheme: const IconThemeData(
       color: _lightIconColor,
     ),
 
-    primaryIconTheme: IconThemeData(color: _lightPrimaryIconThemeColor),
+    primaryIconTheme: const IconThemeData(color: _lightPrimaryIconThemeColor),
 
     textTheme: _lightTextTheme,
     buttonTheme: _lightButtonThemeData,
@@ -79,7 +82,7 @@ class AppTheme {
     inputDecorationTheme: _lightInputDecorationTheme,
 
     // Change circular progress bar color
-    accentColor: _lightPrimaryVariantColor,
+    //accentColor: _lightPrimaryVariantColor,
   );
 
   static final InputDecorationTheme _lightInputDecorationTheme =
@@ -92,14 +95,15 @@ class AppTheme {
       borderSide: BorderSide(color: _lightPrimaryVariantColor!),
     ),
     hintStyle: GoogleFonts.ptSans(textStyle: _lightScreenBodyText1TextStyle),
-    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+    contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
   );
 // light Appbar text Styling
   static final TextTheme _lightAppBarTextTextTheme = TextTheme(
     headline1: GoogleFonts.lobster(textStyle: _lightAppBarHeadline1TextStyle),
   );
 
-  static final TextStyle _lightAppBarHeadline1TextStyle = TextStyle(
+  static const TextStyle _lightAppBarHeadline1TextStyle = TextStyle(
     color: _lightAppBarTextColor,
   );
 
@@ -118,13 +122,17 @@ class AppTheme {
     color: _lightButtonTextColor,
   );
 
-  static final TextTheme _lightTextTheme = TextTheme(
-    headline1: GoogleFonts.oswald(textStyle: _lightScreenHeading1TextStyle),
-    bodyText1: GoogleFonts.ptSans(textStyle: _lightScreenBodyText1TextStyle),
-    bodyText2: GoogleFonts.ptSans(textStyle: _lightScreenBodyText2TextStyle),
-    subtitle1: GoogleFonts.ptSans(textStyle: _lightScreenSubTitle1TextStyle),
-    subtitle2: GoogleFonts.ptSans(textStyle: _lightScreenSubTitle2TextStyle),
-    button: GoogleFonts.ptSans(textStyle: _lightButtonTextTextStyle),
+  static const TextTheme _lightTextTheme = TextTheme(
+    displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold),
+    titleLarge: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
+    bodyMedium: TextStyle(fontSize: 14.0, fontFamily: 'Hind'),
+
+    //headline1: GoogleFonts.oswald(textStyle: _lightScreenHeading1TextStyle),
+    //bodyText1: GoogleFonts.ptSans(textStyle: _lightScreenBodyText1TextStyle),
+    //bodyText2: GoogleFonts.ptSans(textStyle: _lightScreenBodyText2TextStyle),
+    //subtitle1: GoogleFonts.ptSans(textStyle: _lightScreenSubTitle1TextStyle),
+    //subtitle2: GoogleFonts.ptSans(textStyle: _lightScreenSubTitle2TextStyle),
+    //button: GoogleFonts.ptSans(textStyle: _lightButtonTextTextStyle),
   );
 
   // Text headline1 styling
@@ -179,22 +187,24 @@ class AppTheme {
     // AppBar
     appBarTheme: AppBarTheme(
       color: _darkPrimaryVariantColor,
-      textTheme: _darkAppBarTextTextTheme,
+      //textTheme: _darkAppBarTextTextTheme,
+      toolbarTextStyle: _darkAppBarTextTextTheme.headline1,
       elevation: 8.0,
-      iconTheme: IconThemeData(
+      iconTheme: const IconThemeData(
         color: _darkOnPrimaryColor,
       ),
     ),
     colorScheme: ColorScheme.light(
       primary: _darkPrimaryColor,
-      primaryVariant: _darkPrimaryVariantColor,
+      //primaryVariant: _darkPrimaryVariantColor,
+      primaryContainer: _darkPrimaryVariantColor,
       secondary: _darkSecondaryColor,
       onPrimary: _darkOnPrimaryColor,
     ),
-    iconTheme: IconThemeData(
+    iconTheme: const IconThemeData(
       color: _darkIconColor,
     ),
-    primaryIconTheme: IconThemeData(color: _darkPrimaryIconThemeColor),
+    primaryIconTheme: const IconThemeData(color: _darkPrimaryIconThemeColor),
     textTheme: _darkTextTheme,
     buttonTheme: _darkButtonThemeData,
 
@@ -217,7 +227,8 @@ class AppTheme {
       borderSide: BorderSide(color: _darkPrimaryVariantColor!),
     ),
     hintStyle: GoogleFonts.ptSans(textStyle: _darkScreenBodyText1TextStyle),
-    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+    contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
   );
   // light Appbar text Styling
   static final TextTheme _darkAppBarTextTextTheme = TextTheme(
@@ -278,6 +289,6 @@ class AppTheme {
   );
 
   static Color hexToColor(String code) {
-    return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
+    return Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
   }
 }

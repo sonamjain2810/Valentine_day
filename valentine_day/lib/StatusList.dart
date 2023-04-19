@@ -52,7 +52,7 @@ class _StatusListState extends State<StatusList> {
       appBar: AppBar(
         title: Text(
           "Status List",
-          style: Theme.of(context).appBarTheme.textTheme?.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(
@@ -81,9 +81,10 @@ class _StatusListState extends State<StatusList> {
                           Container(
                             decoration: BoxDecoration(
                                 border: Border.all(
+                                  //color: Theme.of(context).colorScheme.primaryVariant,
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .primaryVariant,
+                                      .onPrimaryContainer,
                                 ),
                                 borderRadius:
                                     // 40 /8.98 = 4.46

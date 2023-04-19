@@ -45,6 +45,9 @@ class AdService {
   static initialize() {
     if (MobileAds.instance == null) {
       MobileAds.instance.initialize();
+      MobileAds.instance.updateRequestConfiguration(RequestConfiguration(
+          testDeviceIds: ['23ccae42061824b847f52b392287252f']));
+      //23ccae42061824b847f52b392287252f
     }
 
     AdService.createBannerAd().load();

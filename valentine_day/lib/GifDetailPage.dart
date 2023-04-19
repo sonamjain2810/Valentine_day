@@ -93,7 +93,7 @@ class _GifDetailPageState extends State<GifDetailPage> {
                 title: Text(
               "Gif No. ${index + 1}",
               //20 & 2
-              style: Theme.of(context).appBarTheme.textTheme?.headline1,
+              style: Theme.of(context).appBarTheme.toolbarTextStyle,
             )),
             body: SafeArea(
               child: SingleChildScrollView(

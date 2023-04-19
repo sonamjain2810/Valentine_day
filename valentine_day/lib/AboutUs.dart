@@ -28,7 +28,7 @@ class _AboutUsState extends State<AboutUs> {
       appBar: AppBar(
         title: Text(
           "About Developer",
-          style: Theme.of(context).appBarTheme.textTheme!.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(

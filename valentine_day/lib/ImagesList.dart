@@ -54,7 +54,7 @@ class _ImagesListState extends State<ImagesList> {
       appBar: AppBar(
         title: Text(
           "Images",
-          style: Theme.of(context).appBarTheme.textTheme!.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(

@@ -67,7 +67,7 @@ class _ShayariDetailPageState extends State<ShayariDetailPage> {
             appBar: AppBar(
                 title: Text(
               "Shayari No. ${index + 1}",
-              style: Theme.of(context).appBarTheme.textTheme!.headline1,
+              style: Theme.of(context).appBarTheme.toolbarTextStyle,
             )),
             body: SafeArea(
               child: SingleChildScrollView(
@@ -90,15 +90,12 @@ class _ShayariDetailPageState extends State<ShayariDetailPage> {
                                     MainAxisAlignment.spaceEvenly,
                                 children: <Widget>[
                                   ElevatedButton(
-                                      child: Text("Share"),
+                                      child: const Text("Share"),
                                       onPressed: () {
                                         setState(() {});
                                         print("Share Button Clicked");
-                                        shareText(Shayari.shayari_data[index] +
-                                            "\n" +
-                                            "Share Via:" +
-                                            "\n" +
-                                            Strings.shareAppText);
+                                        shareText(
+                                            "${Shayari.shayari_data[index]}\nShare Via:\n${Strings.shareAppText}");
                                       }),
                                 ],
                               ),

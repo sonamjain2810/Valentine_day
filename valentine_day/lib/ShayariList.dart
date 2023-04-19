@@ -51,7 +51,7 @@ class _ShayariListState extends State<ShayariList> {
       appBar: AppBar(
         title: Text(
           "Shayari List",
-          style: Theme.of(context).appBarTheme.textTheme?.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SafeArea(
@@ -69,7 +69,7 @@ class _ShayariListState extends State<ShayariList> {
                                 border: Border.all(
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .primaryVariant,
+                                      .onPrimaryContainer,
                                 ),
                                 borderRadius:
                                     // 40 / 8.96 = 4.46

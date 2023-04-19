@@ -102,7 +102,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
       appBar: AppBar(
         title: Text(
           "Invitation & Card Creator",
-          style: Theme.of(context).appBarTheme.textTheme!.headline1,
+          style: Theme.of(context).appBarTheme.toolbarTextStyle,
         ),
       ),
       body: SingleChildScrollView(

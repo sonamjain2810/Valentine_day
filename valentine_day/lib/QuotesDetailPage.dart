@@ -66,7 +66,7 @@ class _QuotesDetailPageState extends State<QuotesDetailPage> {
             appBar: AppBar(
                 title: Text(
               "Quotes No. ${index + 1}",
-              style: Theme.of(context).appBarTheme.textTheme!.headline1,
+              style: Theme.of(context).appBarTheme.toolbarTextStyle,
             )),
             body: SafeArea(
               child: SingleChildScrollView(
