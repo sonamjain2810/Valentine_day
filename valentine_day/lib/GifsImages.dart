@@ -1,12 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:facebook_app_events/facebook_app_events.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'data/AdService.dart';
+import 'utils/pass_data_between_screens.dart';
+import 'AdManager/ad_helper.dart';
+import 'Enums/project_routes_enum.dart';
+import 'Singleton/project_manager.dart';
 import 'data/Gifs.dart';
-import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
-import 'GifDetailPage.dart';
 
 class GifsImages extends StatefulWidget {
   @override
@@ -14,38 +14,38 @@ class GifsImages extends StatefulWidget {
 }
 
 class _GifsImagesState extends State<GifsImages> {
-  static final facebookAppEvents = FacebookAppEvents();
+  BannerAd? _bannerAd;
+  var data = Gifs.gifsPath;
 
-  var data = Gifs.gifs_path;
-
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.largeBanner,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd1.dispose();
+    _bannerAd?.dispose();
   }
 
   @override
@@ -54,62 +54,71 @@ class _GifsImagesState extends State<GifsImages> {
       appBar: AppBar(
         title: Text(
           "Gif Images",
-          style: Theme.of(context).appBarTheme.toolbarTextStyle,
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SafeArea(
         child: data != null
             ? GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2),
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     child: Padding(
-                      //8.0
                       padding:
                           EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
-
-                      child: ListTile(
-                        title: CachedNetworkImage(
-                          imageUrl: data[index],
-                          placeholder: (context, url) =>
-                              const CircularProgressIndicator(
-                            color: Colors.white,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(context).shadowColor.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: data[index],
+                            placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => const Icon(Icons.error),
+                            fadeOutDuration: const Duration(seconds: 1),
+                            fadeInDuration: const Duration(seconds: 3),
+                            fit: BoxFit.cover,
                           ),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error),
-                          fadeOutDuration: const Duration(seconds: 1),
-                          fadeInDuration: const Duration(seconds: 3),
                         ),
                       ),
                     ),
                     onTap: () {
-                      print("Click on Gif Grid item $index");
-                      Navigator.push(
-                          context,
-                          new MaterialPageRoute(
-                              builder: (context) => GifDetailPage(index)));
-
-                      facebookAppEvents.logEvent(
-                        name: "GIF List",
-                        parameters: {
-                          'clicked_on_gif_image_index': '$index',
-                        },
+                      debugPrint("Click on Gif Grid item $index");
+                      Navigator.of(context).pushNamed(
+                        ProjectRoutes.gifDetailPage.toString(),
+                        arguments: PassDataBetweenScreens("", index.toString()),
                       );
                     },
                   );
                 },
                 itemCount: data.length,
               )
-            : Center(
+            : const Center(
                 child: CircularProgressIndicator(),
               ),
       ),
-      bottomNavigationBar: Container(
-        alignment: Alignment.center,
-        height: bannerAd1.size.height.toDouble(),
-        width: bannerAd1.size.width.toDouble(),
-        child: AdWidget(ad: bannerAd1),
+      bottomNavigationBar: BottomAppBar(
+        child: _bannerAd != null
+            ? SizedBox(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              )
+            : Container(),
       ),
     );
   }

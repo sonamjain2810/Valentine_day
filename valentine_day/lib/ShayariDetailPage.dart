@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:facebook_app_events/facebook_app_events.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
-import 'data/AdService.dart';
+import 'AdManager/ad_helper.dart';
 import 'data/Shayari.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
+import 'utils/pass_data_between_screens.dart';
 
 /*
 how to pass data into another screen watch this video
@@ -15,58 +15,64 @@ https://www.youtube.com/watch?v=d5PpeNb-dOY
  */
 
 class ShayariDetailPage extends StatefulWidget {
-  int index;
-  ShayariDetailPage(this.index);
+  ShayariDetailPage({super.key});
   @override
-  _ShayariDetailPageState createState() => _ShayariDetailPageState(index);
+  _ShayariDetailPageState createState() => _ShayariDetailPageState();
 }
 
 class _ShayariDetailPageState extends State<ShayariDetailPage> {
-  int index;
-  _ShayariDetailPageState(this.index);
-  static final facebookAppEvents = FacebookAppEvents();
+  late String type;
+  late int defaultIndex;
 
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
+  BannerAd? _bannerAd;
+
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.mediumRectangle,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd1.dispose();
+    _bannerAd?.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as PassDataBetweenScreens;
+    type = args.title;
+    defaultIndex = int.parse(args.message);
+
     // TODO: implement build
     return PageView.builder(
         controller: PageController(
-            initialPage: index, keepPage: true, viewportFraction: 1),
+            initialPage: defaultIndex, keepPage: true, viewportFraction: 1),
         itemBuilder: (context, index) {
           return Scaffold(
             appBar: AppBar(
                 title: Text(
-              "Shayari No. ${index + 1}",
+              "Late Night Ideas ${index + 1}",
               style: Theme.of(context).appBarTheme.toolbarTextStyle,
             )),
             body: SafeArea(
@@ -80,8 +86,10 @@ class _ShayariDetailPageState extends State<ShayariDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(Shayari.shayari_data[index],
-                                style: Theme.of(context).textTheme.bodyText1),
+                            Text(
+                              Shayari.shayariData[index],
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
                             Padding(
                               padding: EdgeInsets.only(
                                   top: 1.93 * SizeConfig.widthMultiplier),
@@ -89,23 +97,18 @@ class _ShayariDetailPageState extends State<ShayariDetailPage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: <Widget>[
-                                  ElevatedButton(
-                                      child: const Text("Share"),
-                                      onPressed: () {
-                                        setState(() {});
-                                        print("Share Button Clicked");
-                                        shareText(
-                                            "${Shayari.shayari_data[index]}\nShare Via:\n${Strings.shareAppText}");
-                                      }),
+                                  Builder(builder: (BuildContext context) {
+                                    return ElevatedButton(
+                                        child: const Text("Share"),
+                                        onPressed: () {
+                                          setState(() {});
+                                          debugPrint("Share Button Clicked");
+                                          _onShare(context,
+                                              "${Shayari.shayariData[index]}\nShare Via:\n${Strings.shareAppText}");
+                                          //shareText(Shayari.shayari_data[index] +"\n" +"Share Via:" +"\n" +Strings.shareAppText);
+                                        });
+                                  }),
                                 ],
-                              ),
-                            ),
-                            Divider(),
-                            Center(
-                              child: Container(
-                                height: bannerAd1.size.height.toDouble(),
-                                width: bannerAd1.size.width.toDouble(),
-                                child: AdWidget(ad: bannerAd1),
                               ),
                             ),
                           ],
@@ -114,24 +117,52 @@ class _ShayariDetailPageState extends State<ShayariDetailPage> {
                 ),
               ),
             ),
-            bottomNavigationBar: Container(
-                alignment: Alignment.center, height: 50, child: Container()),
+            bottomNavigationBar: BottomAppBar(
+              child: _bannerAd != null
+                  ? SizedBox(
+                      width: _bannerAd!.size.width.toDouble(),
+                      height: _bannerAd!.size.height.toDouble(),
+                      child: AdWidget(
+                        ad: _bannerAd!,
+                      ),
+                    )
+                  : Container(),
+            ),
           );
         });
+  }
+
+  void _onShare(BuildContext context, String text) async {
+    // A builder is used to retrieve the context immediately
+    // surrounding the ElevatedButton.
+    //
+    // The context's `findRenderObject` returns the first
+    // RenderObject in its descendent tree when it's not
+    // a RenderObjectWidget. The ElevatedButton's RenderObject
+    // has its position and size after it's built.
+    final box = context.findRenderObject() as RenderBox?;
+
+    /*if (imagePaths.isNotEmpty) {
+      final files = <XFile>[];
+      for (var i = 0; i < imagePaths.length; i++) {
+        files.add(XFile(imagePaths[i], name: imageNames[i]));
+      }
+      await Share.shareXFiles(files,
+          text: text,
+          subject: subject,
+          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size);
+    } else {*/
+    await Share.share(text,
+        subject: "Share",
+        sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size);
+    //}
   }
 
   Future<void> shareText(String message) async {
     try {
       Share.share(message);
     } catch (e) {
-      print('error: $e');
+      debugPrint('error: $e');
     }
-
-    facebookAppEvents.logEvent(
-      name: "Quotes Share",
-      parameters: {
-        'quotes_shared': '$message',
-      },
-    );
   }
 }

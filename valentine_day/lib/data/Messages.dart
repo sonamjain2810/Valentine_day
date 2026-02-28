@@ -1,7 +1,7 @@
 class Messages {
   Messages._();
 
-  static const english_data = [
+  static const englishData = [
 "Valentine’s Day is my favorite day because I can have the pretext to pamper you every minute of February 14. I love you!"
      ,
 "To give love is to receive full and genuine happiness, I know you feel it because ours always was and will be LOVE!"
@@ -472,7 +472,7 @@ class Messages {
   ,
   ];
 
-  static const french_data = [
+  static const frenchData = [
 "Très bonne Saint Valentin à la personne la plus importante dans mon cœur et ma vie. Je t'embrasse avec tout mon amour et toute ma passion."
   ,
 "T’aimer et t’admirer à jamais, te soutenir et te chérir, voilà mon plus grand projet de l’avenir. Bonne Saint-Valentin."
@@ -563,7 +563,7 @@ class Messages {
 "Bonne Saint-Valentin à la femme de ma vie. Je souhaite que tu saches que tu es très importante pour moi et que ma vie ne serait rien sans toi. Je t'aime."
   ,
   ];
-  static const german_data = [
+  static const germanData = [
 // germany
 
 "Die schönsten Orte im Leben kann man nicht sehen oder hören. Mann muss sie mit dem Herzen fühlen. Mein Platz ist bei dir. Alles Liebe zum Valentinstag."
@@ -715,7 +715,7 @@ class Messages {
 "In meinem kleinen Herz bist Du für immer drin!\nDrum denk ich an Dich, auch zu St. Valentin!"
   ,
   ];
-  static const hindi_data = [
+  static const hindiData = [
     // hindi
     "7 जन्मो से तेरा इंतज़ार किया…\nहर जन्म में तेरा दीदार किया…..\nएक बार नहीं तुझे 100 बार प्यार किया.\nHAPPY VALENTINE DAY"
   ,
@@ -795,7 +795,7 @@ class Messages {
   
   ];
 
-  static const italy_data = [
+  static const italyData = [
     // italy
 "Tu sei speciale e c'è un posto speciale nel mio cuore che solo tu puoi riempire. Ti ho amato fin dal primo momento e tu sai che ti amerò per sempre. Buon San Valentino."
      ,
@@ -1025,7 +1025,7 @@ class Messages {
 "Ogni storia d’amore è stupenda ma la nostra è la mia favorita."
   ];
 
-  static const portugal_data = [
+  static const portugalData = [
     // portugal
   "Fiz de você meu porto seguro, meu brilho no escuro, minha estrela particular. Fiz de você meus melhores sorrisos, meu paraíso, meu querer, meu amar. Feliz dia dos namorados, meu grande amor! ✨"
   ,
@@ -1218,7 +1218,7 @@ class Messages {
  "Pensei que para comemorar o dia dos namorados tinha que fazer uma escolha certa, e isto implica não só um lugar romântico, mas a melhor companhia para passar comigo todos os dias dos namorados de forma especial."
   ,
   ];
-  static const spanish_data = [
+  static const spanishData = [
     // spainsh
 
       

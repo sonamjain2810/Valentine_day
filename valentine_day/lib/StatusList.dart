@@ -1,11 +1,14 @@
-import 'package:facebook_app_events/facebook_app_events.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-import 'StatusDetailPage.dart';
+//import 'StatusDetailPage.dart';
+import 'AdManager/ad_helper.dart';
+import 'Enums/project_routes_enum.dart';
+import 'Singleton/project_manager.dart';
 import 'data/Status.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
+import 'utils/pass_data_between_screens.dart';
 
 class StatusList extends StatefulWidget {
   @override
@@ -13,37 +16,39 @@ class StatusList extends StatefulWidget {
 }
 
 class _StatusListState extends State<StatusList> {
-  static final facebookAppEvents = FacebookAppEvents();
-  var data = Status.status_data;
+  var data = Status.statusData;
 
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
+  BannerAd? _bannerAd;
+
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.largeBanner,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd1.dispose();
+    _bannerAd?.dispose();
   }
 
   @override
@@ -56,22 +61,14 @@ class _StatusListState extends State<StatusList> {
         ),
       ),
       body: SafeArea(
-        child: data != null
-            ? ListView.builder(
+        child:ListView.builder(
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          new MaterialPageRoute(
-                              builder: (context) => StatusDetailPage(index)));
-
-                      facebookAppEvents.logEvent(
-                        name: "Status List",
-                        parameters: {
-                          'clicked_on_status_index': '$index',
-                        },
-                      );
+                      //Navigator.push(context,MaterialPageRoute(builder: (context) => StatusDetailPage(index)));
+                      ProjectManager.instance.clickOnButton(
+                          ProjectRoutes.statusDetailPage.toString(),
+                          PassDataBetweenScreens("", index.toString()));
                     },
                     child: Padding(
                       padding:
@@ -81,10 +78,9 @@ class _StatusListState extends State<StatusList> {
                           Container(
                             decoration: BoxDecoration(
                                 border: Border.all(
-                                  //color: Theme.of(context).colorScheme.primaryVariant,
                                   color: Theme.of(context)
                                       .colorScheme
-                                      .onPrimaryContainer,
+                                      .primaryContainer,
                                 ),
                                 borderRadius:
                                     // 40 /8.98 = 4.46
@@ -97,7 +93,7 @@ class _StatusListState extends State<StatusList> {
                               title: Text(
                                 data[index],
                                 maxLines: 2,
-                                style: Theme.of(context).textTheme.bodyText1,
+                                style: Theme.of(context).textTheme.labelLarge,
                               ),
                               trailing: Icon(Icons.arrow_forward_ios,
                                   color:
@@ -111,15 +107,18 @@ class _StatusListState extends State<StatusList> {
                 },
                 itemCount: data.length,
               )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
+            ,
       ),
-      bottomNavigationBar: Container(
-        alignment: Alignment.center,
-        height: bannerAd1.size.height.toDouble(),
-        width: bannerAd1.size.width.toDouble(),
-        child: AdWidget(ad: bannerAd1),
+      bottomNavigationBar: BottomAppBar(
+        child: _bannerAd != null
+            ? SizedBox(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(
+                  ad: _bannerAd!,
+                ),
+              )
+            : Container(),
       ),
     );
   }

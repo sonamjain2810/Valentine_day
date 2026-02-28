@@ -2,10 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Valentine&apos;s Day</string>
+	<string>Valentine's Day</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,11 +15,11 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Valentine&apos;s Day</string>
+	<string>Valentine's Day</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
+	<string>3.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -30,15 +32,15 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>2.0.1</string>
+	<string>4</string>
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<true/>
 	<key>FacebookAppID</key>
 	<string>252855222949806</string>
 	<key>FacebookClientToken</key>
 	<string>212563b63a7cc4449c0925c529c889c4</string>
-	<key>FacebookAdvertiserIDCollectionEnabled</key>
-	<true/>
 	<key>FacebookDisplayName</key>
-	<string>Flutter Valentine&apos;s Day</string>
+	<string>Flutter Valentine's Day</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-8179797674906935~3807731927</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -63,28 +65,9 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This allows you to make custom Memes, Greeting Cards or eCards with the existing PHOTOS in LIBRARY &amp; allows to save all your EDITED PHOTOS by the APP.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>$(PRODUCT_NAME) is using speech recognition to determine which words you speak into the device&apos;s Microphone. We&apos;ll use it for live transcriptions.</string>
+	<string>$(PRODUCT_NAME) is using speech recognition to determine which words you speak into the device's Microphone. We'll use it for live transcriptions.</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>This identifier will be used to deliver personalized ads to you.</string>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
-	<key>io.flutter.embedded_views_preview</key>
-	<true/>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>
@@ -288,7 +271,22 @@
 			<string>3qcr597p9d.skadnetwork</string>
 		</dict>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>io.flutter.embedded_views_preview</key>
 	<true/>
 </dict>
 </plist>

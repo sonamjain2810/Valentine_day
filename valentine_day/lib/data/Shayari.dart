@@ -1,6 +1,6 @@
 class Shayari {
   Shayari._();
-  static const shayari_data = [
+  static const shayariData = [
  "उन्होंने गले लगाने का आविष्कार किया ताकि बिना कुछ कहे लोगों को बताया जा सके कि आप उनसे प्यार करते हैं।"
  ,
 "Honthon Se Pyaar Ke Fasaane Nahin Aate,\nSahil Pe Sumandar Ke Moti Nahin Aate,\nLelo Abhi Zindagi Mein Dosti Ka Mazaa,\nPhir Laut Ke Hum Jaise Deewane Nahin Aate!\nValentine’s Day Aapko Mubarak Ho"

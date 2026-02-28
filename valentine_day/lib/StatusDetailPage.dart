@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'package:facebook_app_events/facebook_app_events.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:share_plus/share_plus.dart';
+import 'AdManager/ad_helper.dart';
 import 'data/Status.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
+import 'utils/pass_data_between_screens.dart';
 
 /*
 how to pass data into another screen watch this video
@@ -14,55 +15,61 @@ https://www.youtube.com/watch?v=d5PpeNb-dOY
  */
 
 class StatusDetailPage extends StatefulWidget {
-  int index;
-  StatusDetailPage(this.index);
+  const StatusDetailPage({super.key});
   @override
-  _StatusDetailPageState createState() => _StatusDetailPageState(index);
+  _StatusDetailPageState createState() => _StatusDetailPageState();
 }
 
 class _StatusDetailPageState extends State<StatusDetailPage> {
-  int index;
-  _StatusDetailPageState(this.index);
-  static final facebookAppEvents = FacebookAppEvents();
+  late String type;
+  late int defaultIndex;
+  BannerAd? _bannerAd;
 
-  // Banner Ad
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.mediumRectangle,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
+
   // Banner Ad
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd1.dispose();
+    _bannerAd?.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
+
+    final args =
+        ModalRoute.of(context)!.settings.arguments as PassDataBetweenScreens;
+    type = args.title;
+    defaultIndex = int.parse(args.message);
+
     return PageView.builder(
         controller: PageController(
-            initialPage: index, keepPage: true, viewportFraction: 1),
+            initialPage: defaultIndex, keepPage: true, viewportFraction: 1),
         itemBuilder: (context, index) {
           return Scaffold(
             appBar: AppBar(
@@ -81,8 +88,8 @@ class _StatusDetailPageState extends State<StatusDetailPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(Status.status_data[index],
-                                style: Theme.of(context).textTheme.bodyText1),
+                            Text(Status.statusData[index],
+                                style: Theme.of(context).textTheme.bodyLarge),
                             Padding(
                               padding: EdgeInsets.only(
                                   top: 1.93 * SizeConfig.widthMultiplier),
@@ -92,27 +99,14 @@ class _StatusDetailPageState extends State<StatusDetailPage> {
                                 children: <Widget>[
                                   Builder(builder: (BuildContext context) {
                                     return ElevatedButton(
-                                        child: Text("Share"),
+                                        child: const Text("Share"),
                                         onPressed: () {
-                                          print("Share Button Clicked");
-                                          _onShare(
-                                              context,
-                                              Status.status_data[index] +
-                                                  "\n" +
-                                                  "Share Via:" +
-                                                  "\n" +
-                                                  Strings.shareAppText);
+                                          debugPrint("Share Button Clicked");
+                                          _onShare(context,
+                                              "${Status.statusData[index]}\nShare Via:\n${Strings.shareAppText}");
                                         });
                                   })
                                 ],
-                              ),
-                            ),
-                            Divider(),
-                            Center(
-                              child: Container(
-                                height: bannerAd1.size.height.toDouble(),
-                                width: bannerAd1.size.width.toDouble(),
-                                child: AdWidget(ad: bannerAd1),
                               ),
                             ),
                           ],
@@ -121,8 +115,17 @@ class _StatusDetailPageState extends State<StatusDetailPage> {
                 ),
               ),
             ),
-            bottomNavigationBar: Container(
-                alignment: Alignment.center, height: 50, child: Container()),
+            bottomNavigationBar: BottomAppBar(
+              child: _bannerAd != null
+                  ? SizedBox(
+                      width: _bannerAd!.size.width.toDouble(),
+                      height: _bannerAd!.size.height.toDouble(),
+                      child: AdWidget(
+                        ad: _bannerAd!,
+                      ),
+                    )
+                  : Container(),
+            ),
           );
         });
   }
@@ -157,14 +160,7 @@ class _StatusDetailPageState extends State<StatusDetailPage> {
     try {
       Share.share(message);
     } catch (e) {
-      print('error: $e');
+      debugPrint('error: $e');
     }
-
-    facebookAppEvents.logEvent(
-      name: "Quotes Share",
-      parameters: {
-        'quotes_shared': '$message',
-      },
-    );
   }
 }

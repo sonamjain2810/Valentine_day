@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/utils/SizeConfig.dart';
+import '../utils/SizeConfig.dart';
 
 class CustomTextReadMoreWidget extends StatelessWidget {
   const CustomTextReadMoreWidget({
@@ -44,9 +44,9 @@ class CustomTextReadMoreWidget extends StatelessWidget {
                           Brightness.dark
                       ? Theme.of(context)
                           .textTheme
-                          .bodyText1!
+                          .bodyMedium!
                           .copyWith(color: Colors.black)
-                      : Theme.of(context).textTheme.bodyText1,
+                      : Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -68,7 +68,7 @@ class CustomTextReadMoreWidget extends StatelessWidget {
                   darkButtonText!,
                   style: Theme.of(context)
                       .textTheme
-                      .bodyText1!
+                      .bodyMedium!
                       .copyWith(color: Colors.white),
                   textAlign: TextAlign.right,
                 ),

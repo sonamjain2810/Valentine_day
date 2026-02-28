@@ -1,12 +1,14 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:facebook_app_events/facebook_app_events.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
+import 'AdManager/ad_helper.dart';
+import 'Enums/project_routes_enum.dart';
 import 'data/Images.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
-import 'ImageDetailPage.dart';
+import 'utils/pass_data_between_screens.dart';
 
 class ImagesList extends StatefulWidget {
   @override
@@ -14,99 +16,111 @@ class ImagesList extends StatefulWidget {
 }
 
 class _ImagesListState extends State<ImagesList> {
-  static final facebookAppEvents = FacebookAppEvents();
+  var data = Images.imagesPath;
+  BannerAd? _bannerAd;
 
-  var data = Images.images_path;
-
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.largeBanner,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _bannerAd?.dispose();
     super.dispose();
-    bannerAd1.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           "Images",
-          style: Theme.of(context).appBarTheme.toolbarTextStyle,
+          style: theme.appBarTheme.titleTextStyle,
         ),
       ),
       body: SafeArea(
         child: data != null
             ? GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2),
+                padding: EdgeInsets.all(2 * SizeConfig.widthMultiplier),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: data.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
-                      child: Padding(
-                        padding:
-                            EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
-                        child: ListTile(
-                          title: CachedNetworkImage(
-                            imageUrl: data[index],
-                            placeholder: (context, url) =>
-                                const CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.error),
-                            fadeOutDuration: const Duration(seconds: 1),
-                            fadeInDuration: const Duration(seconds: 3),
-                          ),
+                    onTap: () {
+                      debugPrint("Click on Image Grid item $index");
+                      Navigator.of(context).pushNamed(
+                        ProjectRoutes.imagesDetailPage.toString(),
+                        arguments:
+                            PassDataBetweenScreens("", index.toString()),
+                      );
+                    },
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            4.46 * SizeConfig.widthMultiplier),
+                        side: BorderSide(
+                          color: theme.colorScheme.primaryContainer,
+                          width: 1,
                         ),
                       ),
-                      onTap: () {
-                        print("Click on Image Grid item $index");
-                        Navigator.push(
-                            context,
-                            new MaterialPageRoute(
-                                builder: (context) => ImageDetailPage(index)));
-
-                        facebookAppEvents.logEvent(
-                          name: "Image List",
-                          parameters: {
-                            'clicked_on_jpeg_image_index': '$index',
-                          },
-                        );
-                      });
+                      elevation: theme.cardTheme.elevation ?? 2.0,
+                      color: theme.cardTheme.color,
+                      shadowColor: theme.cardTheme.shadowColor,
+                      child: Padding(
+                        padding:
+                            EdgeInsets.all(1.5 * SizeConfig.widthMultiplier),
+                        child: CachedNetworkImage(
+                          imageUrl: data[index],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
+                          fadeInDuration: const Duration(milliseconds: 500),
+                          fadeOutDuration: const Duration(milliseconds: 300),
+                        ),
+                      ),
+                    ),
+                  );
                 },
-                itemCount: data.length,
               )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
+            : const Center(child: CircularProgressIndicator()),
       ),
-      bottomNavigationBar: Container(
-        alignment: Alignment.center,
-        height: bannerAd1.size.height.toDouble(),
-        width: bannerAd1.size.width.toDouble(),
-        child: AdWidget(ad: bannerAd1),
+      bottomNavigationBar: BottomAppBar(
+        child: _bannerAd != null
+            ? SizedBox(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }

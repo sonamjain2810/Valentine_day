@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/utils/SizeConfig.dart';
+import '../utils/SizeConfig.dart';
 
 class CustomTextOnlyWidget extends StatelessWidget {
   const CustomTextOnlyWidget({
@@ -7,60 +7,59 @@ class CustomTextOnlyWidget extends StatelessWidget {
     required this.size,
     this.color,
     this.text,
-    this.ontap,
     this.language,
   }) : super(key: key);
 
   final Size size;
   final Color? color;
   final String? text, language;
-  final Function? ontap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final theme = Theme.of(context);
+
+    return Container(
+      height: size.height * 0.40,
+      width: size.width * 0.40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(SizeConfig.height(11)),
+      ),
       child: Container(
-        height: size.height * 0.40,
-        width: size.width * 0.40,
+        height: size.height * 0.38,
+        width: size.width * 0.38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.yellow[700],
-          borderRadius: BorderRadius.circular(SizeConfig.height(11)),
+          color: color ?? theme.colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(SizeConfig.height(10)),
         ),
-        child: Container(
-          height: size.height * 0.38,
-          width: size.width * 0.38,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(SizeConfig.height(10)),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(SizeConfig.width(2)),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(height: SizeConfig.height(10)),
-                Text(
-                  language!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyText1!
-                      .copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+        child: Padding(
+          padding: EdgeInsets.all(SizeConfig.width(2)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(height: SizeConfig.height(10)),
+              Text(
+                language ?? '',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onPrimary,
                 ),
-                SizedBox(height: SizeConfig.height(10)),
-                Text(
-                  text!,
-                  style: Theme.of(context).textTheme.bodyText1,
-                  textAlign: TextAlign.center,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: SizeConfig.height(10)),
+              Text(
+                text ?? '',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onPrimary,
                 ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ),
-      onTap: () => ontap,
     );
   }
 }

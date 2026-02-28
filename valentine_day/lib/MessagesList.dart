@@ -1,157 +1,137 @@
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-import 'data/Messages.dart';
-import 'package:facebook_app_events/facebook_app_events.dart';
 import 'package:flutter/material.dart';
-
-import 'data/Strings.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'AdManager/ad_helper.dart';
+import 'Enums/project_routes_enum.dart';
+import 'Singleton/project_manager.dart';
+import 'data/Messages.dart';
 import 'utils/SizeConfig.dart';
-import 'MessageDetailPage.dart';
+import 'utils/pass_data_between_screens.dart';
 
-// ignore: must_be_immutable
 class MessagesList extends StatefulWidget {
-  String? type;
-  MessagesList({this.type});
+  const MessagesList({super.key});
+
   @override
-  _MessagesListState createState() => _MessagesListState(type!);
+  State<MessagesList> createState() => _MessagesListState();
 }
 
 class _MessagesListState extends State<MessagesList> {
-  String type;
-  _MessagesListState(this.type);
-
-  static final facebookAppEvents = FacebookAppEvents();
-
+  late String type;
   var data;
+  BannerAd? _bannerAd;
 
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    _loadBannerAd();
   }
 
-  BannerAd GetBannerAd() {
-    return BannerAd(
-        size: AdSize.largeBanner,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
-          setState(() {
-            isBannerAdLoaded = true;
-          });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+  void _loadBannerAd() {
+    final ad = BannerAd(
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) => setState(() => _bannerAd = ad as BannerAd),
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('Ad load failed: ${error.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
+    ad.load();
   }
 
   @override
   void dispose() {
+    _bannerAd?.dispose();
     super.dispose();
-    bannerAd1.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments as PassDataBetweenScreens;
+    type = args.title;
+
+    debugPrint('Message List Build Method: Message type is $type');
+
     if (type == '1') {
       // English
-      data = Messages.english_data;
+      data = Messages.englishData;
     } else if (type == '4') {
       // Hindi
-      data = Messages.hindi_data;
+      data = Messages.hindiData;
     } else if (type == '3') {
       // German
-      data = Messages.german_data;
+      data = Messages.germanData;
     } else if (type == '2') {
       // french
-      data = Messages.french_data;
+      data = Messages.frenchData;
     } else if (type == '5') {
       // Italian
-      data = Messages.italy_data;
+      data = Messages.italyData;
     } else if (type == '6') {
       // Portuguese
-      data = Messages.portugal_data;
+      data = Messages.portugalData;
     } else {
       // Spanish:
-      data = Messages.spanish_data;
+      data = Messages.spanishData;
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Message List",
-          style: Theme.of(context).appBarTheme.toolbarTextStyle,
-        ),
+        title: Text("Message List", style: Theme.of(context).appBarTheme.titleTextStyle),
       ),
       body: SafeArea(
         child: data != null
             ? ListView.builder(
+                itemCount: data.length,
+                padding: EdgeInsets.symmetric(
+                  vertical: SizeConfig.height(12),
+                  horizontal: SizeConfig.width(12),
+                ),
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  MessageDetailPage(type, index)));
-
-                      facebookAppEvents.logEvent(
-                        name: "Message List",
-                        parameters: {
-                          'clicked_on_message_index': '$index',
-                        },
+                      ProjectManager.instance.clickOnButton(
+                        ProjectRoutes.messagesDetailPage.toString(),
+                        PassDataBetweenScreens(type, index.toString()),
                       );
                     },
-                    child: Padding(
-                      padding:
-                          EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
-                      child: Column(
-                        children: <Widget>[
-                          Container(
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer,
-                                ),
-                                borderRadius:
-                                    // 40 /8.98 = 4.46
-                                    BorderRadius.all(Radius.circular(
-                                        4.46 * SizeConfig.widthMultiplier))),
-                            child: ListTile(
-                              leading: Icon(Icons.brightness_1,
-                                  color:
-                                      Theme.of(context).primaryIconTheme.color),
-                              title: Text(
-                                data[index],
-                                maxLines: 2,
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                              trailing: Icon(Icons.arrow_forward_ios,
-                                  color:
-                                      Theme.of(context).primaryIconTheme.color),
-                            ),
-                          ),
-                        ],
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                          width: 1.0,
+                        ),
+                      ),
+                      elevation: Theme.of(context).cardTheme.elevation,
+                      color: Theme.of(context).cardTheme.color,
+                      margin: EdgeInsets.symmetric(vertical: SizeConfig.height(8)),
+                      child: ListTile(
+                        leading: Icon(Icons.message, color: Theme.of(context).iconTheme.color),
+                        title: Text(
+                          data[index],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        trailing: Icon(Icons.arrow_forward_ios,
+                            size: 16, color: Theme.of(context).iconTheme.color),
                       ),
                     ),
                   );
                 },
-                itemCount: data.length,
               )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
+            : const Center(child: CircularProgressIndicator()),
       ),
-      bottomNavigationBar: Container(
-        alignment: Alignment.center,
-        height: bannerAd1.size.height.toDouble(),
-        width: bannerAd1.size.width.toDouble(),
-        child: AdWidget(ad: bannerAd1),
-      ),
+      bottomNavigationBar: _bannerAd != null
+          ? SizedBox(
+              height: _bannerAd!.size.height.toDouble(),
+              width: _bannerAd!.size.width.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

@@ -22,17 +22,17 @@ class MemeGenerator extends StatefulWidget {
 }
 
 class _MemeGeneratorState extends State<MemeGenerator> {
-  final GlobalKey globalKey = new GlobalKey();
+  final GlobalKey globalKey = GlobalKey();
 
   String headerText = "";
   String footerText = "";
 
-  PickedFile? _image;
+  XFile? _image;
   File? _imageFile;
 
   bool imageSelected = false;
 
-  Random rng = new Random();
+  Random rng = Random();
   final ImagePicker _picker = ImagePicker();
 
   late BannerAd bannerAd1;
@@ -46,7 +46,9 @@ class _MemeGeneratorState extends State<MemeGenerator> {
   BannerAd GetBannerAd() {
     return BannerAd(
         size: AdSize.largeBanner,
-        adUnitId: Strings.iosAdmobBannerId,
+        adUnitId: Platform.isAndroid
+            ? Strings.androidAdmobBannerId
+            : Strings.iosAdmobBannerId,
         listener: BannerAdListener(onAdLoaded: (_) {
           setState(() {
             isBannerAdLoaded = true;
@@ -55,7 +57,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
           isBannerAdLoaded = true;
           ad.dispose();
         }),
-        request: AdRequest())
+        request: const AdRequest())
       ..load();
   }
 
@@ -67,8 +69,9 @@ class _MemeGeneratorState extends State<MemeGenerator> {
 
   Future getImage() async {
     try {
-      final pickedFile = await _picker.getImage(
+      final pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
+        imageQuality: 100,
       );
 
       setState(() {
@@ -78,7 +81,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
         _image = pickedFile;
       });
     } catch (platformException) {
-      print("not allowing " + platformException.toString());
+      debugPrint("not allowing $platformException");
     }
 
     /* try { 
@@ -92,8 +95,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
       } else {}
       _image = image;
     });*/
-    new Directory('storage/emulated/0/' + 'MemeGenerator')
-        .create(recursive: true);
+    Directory('storage/emulated/0/MemeGenerator').create(recursive: true);
   }
 
   @override
@@ -107,55 +109,80 @@ class _MemeGeneratorState extends State<MemeGenerator> {
       ),
       body: SingleChildScrollView(
         child: SafeArea(
-          child: Container(
-            child: Column(
-              children: <Widget>[
-                SizedBox(
-                  //15
-                  height: 1.67 * SizeConfig.heightMultiplier,
-                ),
-                RepaintBoundary(
-                  key: globalKey,
-                  child: Stack(
-                    children: <Widget>[
-                      _image != null
-                          ? Image.file(
-                              File(_image!.path),
-                              //300
-                              height: 33.48 * SizeConfig.heightMultiplier,
-                              fit: BoxFit.fill,
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Center(
-                                  child: Text("Select Image to Get Started",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyText1),
-                                ),
-                              ],
+          child: Column(
+            children: <Widget>[
+              SizedBox(
+                //15
+                height: 1.67 * SizeConfig.heightMultiplier,
+              ),
+              RepaintBoundary(
+                key: globalKey,
+                child: Stack(
+                  children: <Widget>[
+                    _image != null
+                        ? Image.file(
+                            File(_image!.path),
+                            //300
+                            height: 33.48 * SizeConfig.heightMultiplier,
+                            fit: BoxFit.fill,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Center(
+                                child: Text("Select Image to Get Started",
+                                    style:
+                                        Theme.of(context).textTheme.bodyLarge),
+                              ),
+                            ],
+                          ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      //300
+                      height: 33.48 * SizeConfig.heightMultiplier,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            //8 / 8.96 = 0.90
+                            padding: EdgeInsets.symmetric(
+                                vertical: 0.90 * SizeConfig.heightMultiplier),
+                            child: Text(
+                              headerText.toUpperCase(),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 6.28 * SizeConfig.textMultiplier,
+                                shadows: const <Shadow>[
+                                  Shadow(
+                                    offset: Offset(2.0, 2.0),
+                                    blurRadius: 3.0,
+                                    color: Colors.black87,
+                                  ),
+                                  Shadow(
+                                    offset: Offset(2.0, 2.0),
+                                    blurRadius: 8.0,
+                                    color: Colors.black87,
+                                  ),
+                                ],
+                              ),
                             ),
-                      Container(
-                        width: MediaQuery.of(context).size.width,
-                        //300
-                        height: 33.48 * SizeConfig.heightMultiplier,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Container(
-                              //8 / 8.96 = 0.90
+                          ),
+                          const Spacer(),
+                          Container(
                               padding: EdgeInsets.symmetric(
                                   vertical: 0.90 * SizeConfig.heightMultiplier),
                               child: Text(
-                                headerText.toUpperCase(),
+                                footerText.toUpperCase(),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
+                                  // 26/4.14 = 6.28
                                   fontSize: 6.28 * SizeConfig.textMultiplier,
-                                  shadows: <Shadow>[
+                                  shadows: const <Shadow>[
                                     Shadow(
                                       offset: Offset(2.0, 2.0),
                                       blurRadius: 3.0,
@@ -168,97 +195,68 @@ class _MemeGeneratorState extends State<MemeGenerator> {
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                            Spacer(),
-                            Container(
-                                padding: EdgeInsets.symmetric(
-                                    vertical:
-                                        0.90 * SizeConfig.heightMultiplier),
-                                child: Text(
-                                  footerText.toUpperCase(),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    // 26/4.14 = 6.28
-                                    fontSize: 6.28 * SizeConfig.textMultiplier,
-                                    shadows: <Shadow>[
-                                      Shadow(
-                                        offset: Offset(2.0, 2.0),
-                                        blurRadius: 3.0,
-                                        color: Colors.black87,
-                                      ),
-                                      Shadow(
-                                        offset: Offset(2.0, 2.0),
-                                        blurRadius: 8.0,
-                                        color: Colors.black87,
-                                      ),
-                                    ],
-                                  ),
-                                ))
-                          ],
-                        ),
+                              ))
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  height: 2.23 * SizeConfig.heightMultiplier,
-                ),
-                imageSelected
-                    ? Container(
-                        // 20
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 4.83 * SizeConfig.widthMultiplier),
-                        child: Column(
-                          children: <Widget>[
-                            TextField(
-                              onChanged: (val) {
-                                setState(() {
-                                  headerText = val;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                  hintText: "Enter Header Text"),
-                            ),
-                            SizedBox(
-                              //10
-                              height: 1.12 * SizeConfig.heightMultiplier,
-                            ),
-                            TextField(
-                              onChanged: (val) {
-                                setState(() {
-                                  footerText = val;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                  hintText: "Enter Footer Text"),
-                            ),
-                            SizedBox(
-                              //20
-                              height: 2.23 * SizeConfig.heightMultiplier,
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                //ToDo
-                                takeScreenshot();
-                              },
-                              child: Text("Save"),
-                            )
-                          ],
-                        ),
-                      )
-                    : Container(
-                        // child: Center(
-                        //   child: Text("Select image to get started",
-                        //       style: Theme.of(context).textTheme.bodyText1),
-                        // ),
-                        ),
-                _imageFile != null ? Image.file(_imageFile!) : Container(),
-                Divider(),
-              ],
-            ),
+              ),
+              SizedBox(
+                height: 2.23 * SizeConfig.heightMultiplier,
+              ),
+              imageSelected
+                  ? Container(
+                      // 20
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 4.83 * SizeConfig.widthMultiplier),
+                      child: Column(
+                        children: <Widget>[
+                          TextField(
+                            onChanged: (val) {
+                              setState(() {
+                                headerText = val;
+                              });
+                            },
+                            decoration: const InputDecoration(
+                                hintText: "Enter Header Text"),
+                          ),
+                          SizedBox(
+                            //10
+                            height: 1.12 * SizeConfig.heightMultiplier,
+                          ),
+                          TextField(
+                            onChanged: (val) {
+                              setState(() {
+                                footerText = val;
+                              });
+                            },
+                            decoration: const InputDecoration(
+                                hintText: "Enter Footer Text"),
+                          ),
+                          SizedBox(
+                            //20
+                            height: 2.23 * SizeConfig.heightMultiplier,
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              //ToDo
+                              takeScreenshot();
+                            },
+                            child: const Text("Save"),
+                          )
+                        ],
+                      ),
+                    )
+                  : Container(
+                      // child: Center(
+                      //   child: Text("Select image to get started",
+                      //       style: Theme.of(context).textTheme.bodyText1),
+                      // ),
+                      ),
+              _imageFile != null ? Image.file(_imageFile!) : Container(),
+              const Divider(),
+            ],
           ),
         ),
       ),
@@ -266,7 +264,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
         onPressed: () {
           getImage();
         },
-        child: Icon(Icons.photo_library),
+        child: const Icon(Icons.photo_library),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
@@ -286,8 +284,8 @@ class _MemeGeneratorState extends State<MemeGenerator> {
     ByteData byteData =
         await image.toByteData(format: ui.ImageByteFormat.png) as ByteData;
     Uint8List pngBytes = byteData.buffer.asUint8List();
-    print(pngBytes);
-    File imgFile = new File('$directory/screenshot${rng.nextInt(200)}.png');
+    debugPrint(pngBytes.toString());
+    File imgFile = File('$directory/screenshot${rng.nextInt(200)}.png');
     setState(() {
       _imageFile = imgFile;
     });
@@ -300,7 +298,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
     await _askPermission();
     final result = await ImageGallerySaver.saveImage(
         Uint8List.fromList(await file.readAsBytes()));
-    print(result);
+    debugPrint(result);
   }
 
   _askPermission() async {
@@ -308,7 +306,7 @@ class _MemeGeneratorState extends State<MemeGenerator> {
       Permission.photos,
       Permission.storage,
     ].request();
-    print(statuses[Permission.photos]);
-    print(statuses[Permission.storage]);
+    debugPrint(statuses[Permission.photos].toString());
+    debugPrint(statuses[Permission.storage].toString());
   }
 }

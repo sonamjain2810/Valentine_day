@@ -42,7 +42,7 @@ class AppStoreItemWidget2 extends StatelessWidget {
             appTitle!,
             style: Theme.of(context)
                 .textTheme
-                .bodyText1!
+                .bodySmall!
                 .copyWith(fontWeight: FontWeight.bold),
           ),
         ],

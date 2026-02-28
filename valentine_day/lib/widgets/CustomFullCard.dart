@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import '/utils/SizeConfig.dart';
+import '../utils/SizeConfig.dart';
 
 class CustomFullCard extends StatelessWidget {
   const CustomFullCard({
     Key? key,
     required this.size,
-    this.imageUrl,
-    this.ontap,
+    this.imageUrl, required Null Function() onTap,
   }) : super(key: key);
 
   final Size size;
   final String? imageUrl;
-  final Function? ontap;
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -30,7 +29,6 @@ class CustomFullCard extends StatelessWidget {
               image: AssetImage(imageUrl!),
             )),
       ),
-      onTap: () => ontap,
     );
   }
 }

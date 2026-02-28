@@ -1,8 +1,11 @@
-import 'package:facebook_app_events/facebook_app_events.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-import 'QuotesDetailPage.dart';
+import 'utils/pass_data_between_screens.dart';
+import 'AdManager/ad_helper.dart';
+import 'AdManager/ad_manager.dart';
+import 'Enums/project_routes_enum.dart';
+import 'Singleton/project_manager.dart';
 import 'data/Quotes.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
@@ -13,112 +16,108 @@ class QuotesList extends StatefulWidget {
 }
 
 class _QuotesListState extends State<QuotesList> {
-  static final facebookAppEvents = FacebookAppEvents();
-  var data = Quotes.quotes_data;
+  var data = Quotes.quotesData;
+  BannerAd? _bannerAd;
 
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
   @override
   void initState() {
     super.initState();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.largeBanner,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd1.dispose();
+    _bannerAd?.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           "Quotes List",
-          style: Theme.of(context).appBarTheme.toolbarTextStyle,
+          style: theme.appBarTheme.titleTextStyle,
         ),
       ),
       body: SafeArea(
         child: data != null
             ? ListView.builder(
+                itemCount: data.length,
+                padding: EdgeInsets.symmetric(
+                  vertical: 1.93 * SizeConfig.widthMultiplier,
+                ),
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          new MaterialPageRoute(
-                              builder: (context) => QuotesDetailPage(index)));
-
-                      facebookAppEvents.logEvent(
-                        name: "Quotes List",
-                        parameters: {
-                          'clicked_on_quotes_index': '$index',
-                        },
+                      ProjectManager.instance.clickOnButton(
+                        ProjectRoutes.quotesDetailPage.toString(),
+                        PassDataBetweenScreens("6", index.toString()),
                       );
                     },
                     child: Padding(
-                      padding:
-                          EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
-                      child: Column(
-                        children: <Widget>[
-                          Container(
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer,
-                                ),
-                                borderRadius:
-                                    // 40 /8.98 = 4.46
-                                    BorderRadius.all(Radius.circular(
-                                        4.46 * SizeConfig.widthMultiplier))),
-                            child: ListTile(
-                              leading: Icon(Icons.brightness_1,
-                                  color:
-                                      Theme.of(context).primaryIconTheme.color),
-                              title: Text(
-                                data[index],
-                                maxLines: 2,
-                                style: Theme.of(context).textTheme.bodyText1,
-                              ),
-                              trailing: Icon(Icons.arrow_forward_ios,
-                                  color:
-                                      Theme.of(context).primaryIconTheme.color),
-                            ),
+                      padding: EdgeInsets.symmetric(
+                          vertical: 1.2 * SizeConfig.heightMultiplier,
+                          horizontal: 2.5 * SizeConfig.widthMultiplier),
+                      child: Card(
+                        elevation: theme.cardTheme.elevation,
+                        shadowColor: theme.cardTheme.shadowColor,
+                        color: theme.cardTheme.color,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                              4.46 * SizeConfig.widthMultiplier),
+                          side: BorderSide(
+                            color: theme.colorScheme.primaryContainer,
                           ),
-                        ],
+                        ),
+                        child: ListTile(
+                          leading: Icon(Icons.format_quote,
+                              color: theme.iconTheme.color),
+                          title: Text(
+                            data[index],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelLarge,
+                          ),
+                          trailing: Icon(Icons.arrow_forward_ios,
+                              color: theme.iconTheme.color),
+                        ),
                       ),
                     ),
                   );
                 },
-                itemCount: data.length,
               )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
+            : const Center(child: CircularProgressIndicator()),
       ),
-      bottomNavigationBar: Container(
-        alignment: Alignment.center,
-        height: bannerAd1.size.height.toDouble(),
-        width: bannerAd1.size.width.toDouble(),
-        child: AdWidget(ad: bannerAd1),
+      bottomNavigationBar: BottomAppBar(
+        child: _bannerAd != null
+            ? SizedBox(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }

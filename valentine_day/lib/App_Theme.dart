@@ -46,7 +46,7 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       color: _lightPrimaryVariantColor,
       //textTheme: _lightAppBarTextTextTheme,
-      toolbarTextStyle: _lightAppBarTextTextTheme.headline1,
+      titleTextStyle: _lightAppBarTextTextTheme.displayLarge,
       elevation: 8.0,
       iconTheme: const IconThemeData(
         color: _lightPrimaryIconThemeColor,
@@ -85,6 +85,12 @@ class AppTheme {
     //accentColor: _lightPrimaryVariantColor,
   );
 
+static final CardThemeData _lightCardTheme = CardThemeData(
+  elevation: 6.0,
+  color: _lightCardColor,
+  shadowColor: _lightShadowColor,
+);
+
   static final InputDecorationTheme _lightInputDecorationTheme =
       InputDecorationTheme(
     enabledBorder: OutlineInputBorder(
@@ -100,7 +106,9 @@ class AppTheme {
   );
 // light Appbar text Styling
   static final TextTheme _lightAppBarTextTextTheme = TextTheme(
-    headline1: GoogleFonts.lobster(textStyle: _lightAppBarHeadline1TextStyle),
+    displayLarge: GoogleFonts.lobster(
+      textStyle: _lightAppBarHeadline1TextStyle,
+    ),
   );
 
   static const TextStyle _lightAppBarHeadline1TextStyle = TextStyle(
@@ -174,26 +182,20 @@ class AppTheme {
     letterSpacing: .10,
   );
 
-  static final CardTheme _lightCardTheme = CardTheme(
-    elevation: 6.0,
-    color: _lightCardColor,
-    shadowColor: _lightShadowColor,
-  );
-
   // upar jo hamne dark theme ke colors banaye the woh ThemeData me use karege
   static final ThemeData darkTheme = ThemeData(
     scaffoldBackgroundColor: _darkPrimaryColor,
 
     // AppBar
     appBarTheme: AppBarTheme(
-      color: _darkPrimaryVariantColor,
-      //textTheme: _darkAppBarTextTextTheme,
-      toolbarTextStyle: _darkAppBarTextTextTheme.headline1,
+      backgroundColor: _lightPrimaryVariantColor,
+      titleTextStyle: _lightAppBarTextTextTheme.displayLarge,
       elevation: 8.0,
       iconTheme: const IconThemeData(
-        color: _darkOnPrimaryColor,
+        color: _lightPrimaryIconThemeColor,
       ),
     ),
+
     colorScheme: ColorScheme.light(
       primary: _darkPrimaryColor,
       //primaryVariant: _darkPrimaryVariantColor,
@@ -217,6 +219,12 @@ class AppTheme {
     inputDecorationTheme: _darkInputDecorationTheme,
   );
 
+  static final CardThemeData _darkCardTheme = _lightCardTheme.copyWith(
+  color: _darkCardColor,
+  shadowColor: _darkShadowColor,
+);
+
+
   static final InputDecorationTheme _darkInputDecorationTheme =
       InputDecorationTheme(
     enabledBorder: OutlineInputBorder(
@@ -231,9 +239,12 @@ class AppTheme {
         const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
   );
   // light Appbar text Styling
-  static final TextTheme _darkAppBarTextTextTheme = TextTheme(
-    headline1: GoogleFonts.lobster(textStyle: _darkAppBarHeadline1TextStyle),
-  );
+ static final TextTheme _darkAppBarTextTextTheme = TextTheme(
+  displayLarge: GoogleFonts.lobster(
+    textStyle: _darkAppBarHeadline1TextStyle,
+  ),
+);
+
 
   static final TextStyle _darkAppBarHeadline1TextStyle =
       _lightAppBarHeadline1TextStyle.copyWith(
@@ -241,12 +252,25 @@ class AppTheme {
   );
 
   static final TextTheme _darkTextTheme = TextTheme(
-    headline1: GoogleFonts.oswald(textStyle: _darkScreenHeading1TextStyle),
-    bodyText1: GoogleFonts.ptSans(textStyle: _darkScreenBodyText1TextStyle),
-    subtitle1: GoogleFonts.ptSans(textStyle: _darkScreenSubTitle1TextStyle),
-    subtitle2: GoogleFonts.ptSans(textStyle: _darkScreenSubTitle2TextStyle),
-    button: GoogleFonts.ptSans(textStyle: _darkButtonTextTextStyle),
-  );
+  displayLarge: GoogleFonts.oswald(
+    textStyle: _darkScreenHeading1TextStyle,
+  ),
+  bodyLarge: GoogleFonts.ptSans(
+    textStyle: _darkScreenBodyText1TextStyle,
+  ),
+  titleMedium: GoogleFonts.ptSans(
+    textStyle: _darkScreenSubTitle1TextStyle,
+  ),
+  titleSmall: GoogleFonts.ptSans(
+    textStyle: _darkScreenSubTitle2TextStyle,
+  ),
+  labelLarge: GoogleFonts.ptSans(
+    textStyle: _darkButtonTextTextStyle,
+  ),
+);
+
+
+
 
   // Text headline1 styling
   static final TextStyle _darkScreenHeading1TextStyle =
@@ -283,10 +307,7 @@ class AppTheme {
     color: _darkButtonTextColor,
   );
 
-  static final CardTheme _darkCardTheme = _lightCardTheme.copyWith(
-    color: _darkCardColor,
-    shadowColor: _darkShadowColor,
-  );
+  
 
   static Color hexToColor(String code) {
     return Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);

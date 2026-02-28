@@ -1,7 +1,7 @@
 class Status {
   Status._();
 
-  static const status_data = [
+  static const statusData = [
 "When you love someone, it’s nothing. When someone loves you, it’s something. When you love someone & they love you back, it’s everything. Happy valentines day"
      ,
 "Nothing is Good, but when I am with U everything is Good…Happy Valentine Day"

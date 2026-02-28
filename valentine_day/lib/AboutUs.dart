@@ -1,4 +1,3 @@
-import 'package:facebook_app_events/facebook_app_events.dart';
 import "package:flutter/material.dart";
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -13,7 +12,6 @@ class AboutUs extends StatefulWidget {
 }
 
 class _AboutUsState extends State<AboutUs> {
-  static final facebookAppEvents = FacebookAppEvents();
 
   var aboutUsString =
       "Hello, My name is Rikhil Jain and I'm the man behind this app.\n\tIf you have any suggestions or feedback feel free to message me. I will reply to everyone. Do drop me a hello.\nIt really means a lot to me.\nLooking forward to hear from you.";
@@ -40,7 +38,7 @@ class _AboutUsState extends State<AboutUs> {
                 Center(
                   child: CircleAvatar(
                     radius: 19 * SizeConfig.widthMultiplier,
-                    backgroundImage: NetworkImage(
+                    backgroundImage: const NetworkImage(
                         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROE68eqV_QJUN9Nm9465OU0K8Zu245K7JktX5OJUTCioQb1B8R&s'),
                     backgroundColor: Colors.grey,
                   ),
@@ -52,7 +50,7 @@ class _AboutUsState extends State<AboutUs> {
                     padding: EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
                     child: Text(
                       aboutUsString,
-                      style: Theme.of(context).textTheme.bodyText1,
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ),
                 ),
@@ -60,140 +58,82 @@ class _AboutUsState extends State<AboutUs> {
                 Column(
                   children: <Widget>[
                     ListTile(
-                      leading: Icon(MdiIcons.youtube,
-                          color: Theme.of(context).iconTheme.color),
+                      leading:  Icon(MdiIcons.youtube, color: Colors.red),
                       title: Text(
                         "Search on YouTube",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       subtitle: Text(
                         "Channel Name \"GJOneStudio Language Tutors\"",
-                        style: Theme.of(context).textTheme.subtitle1,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       trailing: Icon(Icons.search,
                           color: Theme.of(context).primaryIconTheme.color),
                       onTap: () {
-                        launch(youtubeURL);
+                        launchUrl(Uri.parse(youtubeURL));
 
-                        facebookAppEvents.logEvent(
-                          name: "YouTube URL",
-                          parameters: {
-                            'clicked_on_youtube_url': 'Yes',
-                          },
-                        );
+                        
                       },
                     ),
-                    Divider(),
+                    const Divider(),
                     ListTile(
-                      leading: Icon(MdiIcons.instagram,
-                          color: Theme.of(context).iconTheme.color),
+                      leading:
+                           Icon(MdiIcons.instagram, color: Colors.indigo),
                       title: Text(
                         "Message Me on Instagram",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       subtitle: Text(
                         "Get New !deas & Online Business Opportunity for Free.",
-                        style: Theme.of(context).textTheme.subtitle1,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       trailing: Icon(MdiIcons.openInApp,
                           color: Theme.of(context).primaryIconTheme.color),
                       onTap: () {
-                        launch(instagramURL);
+                        launchUrl(Uri.parse(instagramURL));
 
-                        facebookAppEvents.logEvent(
-                          name: "Instagram URL",
-                          parameters: {
-                            'clicked_on_instagram_url': 'Yes',
-                          },
-                        );
+                        
                       },
                     ),
-                    Divider(),
+                    const Divider(),
                     ListTile(
-                      leading: Icon(MdiIcons.facebook,
-                          color: Theme.of(context).iconTheme.color),
+                      leading:
+                           Icon(MdiIcons.facebook, color: Colors.blue),
                       title: Text(
                         "Like Me on Facebook",
-                        style: Theme.of(context).textTheme.bodyText1,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       subtitle: Text(
                         "Like Our Page & Stay Updated with Our New App Releases",
-                        style: Theme.of(context).textTheme.subtitle1,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       trailing: Icon(MdiIcons.thumbUp,
                           color: Theme.of(context).primaryIconTheme.color),
                       onTap: () {
-                        launch(fbPageURL);
+                        launchUrl(Uri.parse(fbPageURL));
 
-                        facebookAppEvents.logEvent(
-                          name: "Facebook Page URL",
-                          parameters: {
-                            'clicked_on_facebook_page_url': 'Yes',
-                          },
-                        );
+                        
                       },
                     ),
-                    Divider(),
+                    const Divider(),
                     ListTile(
-                        leading: Icon(MdiIcons.twitter,
-                            color: Theme.of(context).iconTheme.color),
+                        leading:
+                             Icon(MdiIcons.twitter, color: Colors.cyan),
                         title: Text(
                           "Follow Me on Twitter",
-                          style: Theme.of(context).textTheme.bodyText1,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         subtitle: Text(
                           "Get Tips About Online Business.",
-                          style: Theme.of(context).textTheme.subtitle1,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                         trailing: Icon(Icons.trending_up,
                             color: Theme.of(context).primaryIconTheme.color),
                         onTap: () {
-                          launch(twitterURL);
+                          launchUrl(Uri.parse(twitterURL));
 
-                          facebookAppEvents.logEvent(
-                            name: "Twitter URL",
-                            parameters: {
-                              'clicked_on_twitter_url': 'Yes',
-                            },
-                          );
+                          
                         }),
-                    // Divider(),
-                    // ListTile(
-                    //   leading: Icon(
-                    //     Icons.mail,
-                    //     color: Theme.of(context).iconTheme.color
-                    //   ),
-                    //   title: Text(
-                    //     "Email Us",
-                    //     style: Theme.of(context).textTheme.bodyText1,
-                    //   ),
-                    //   subtitle: Text("Lets discuss about your business app.",
-                    // style: Theme.of(context).textTheme.subtitle1,
-                    //   ),
-                    //   trailing: Icon(
-                    //     Icons.send,
-                    //     color: Theme.of(context).primaryIconTheme.color
-                    //   ),
-                    // ),
-                    // Divider(),
-                    // ListTile(
-                    //   leading: Icon(
-                    //     Icons.card_travel,
-                    //     color: Theme.of(context).iconTheme.color
-                    //   ),
-                    //   title: Text(
-                    //     "Be the part of my journey",
-                    //     style: Theme.of(context).textTheme.bodyText1,
-                    //   ),
-                    //   subtitle: Text(
-                    //   "Lets discuss about your business app.",
-                    //   style: Theme.of(context).textTheme.subtitle1,
-                    //   ),
-                    //   trailing: Icon(
-                    //     Icons.send,
-                    //     color: Theme.of(context).primaryIconTheme.color
-                    //   ),
-                    // ),
                   ],
                 ),
               ],

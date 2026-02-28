@@ -1,219 +1,226 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:share_plus/share_plus.dart';
+import 'AdManager/ad_helper.dart';
 import 'data/Gifs.dart';
-import 'package:dio/dio.dart';
-import 'package:facebook_app_events/facebook_app_events.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
-/*
-how to pass data into another screen watch this video
-https://www.youtube.com/watch?v=d5PpeNb-dOY
- */
+import 'utils/pass_data_between_screens.dart';
 
 class GifDetailPage extends StatefulWidget {
-  int? index;
-  GifDetailPage(this.index);
+  GifDetailPage();
 
   @override
-  _GifDetailPageState createState() => _GifDetailPageState(index!);
+  _GifDetailPageState createState() => _GifDetailPageState();
 }
 
-// Height = 8.96
-// Width = 4.14
 class _GifDetailPageState extends State<GifDetailPage> {
-  int index;
-  _GifDetailPageState(this.index);
+  String? type;
+  int? defaultIndex;
+  BannerAd? _bannerAd;
+  bool visible = false;
 
-  static final facebookAppEvents = FacebookAppEvents();
-
-  late BannerAd bannerAd1;
-  bool isBannerAdLoaded = false;
   @override
   void initState() {
     super.initState();
     _requestPermission();
-    bannerAd1 = GetBannerAd();
+    loadBannerAd().load();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.mediumRectangle,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd1.dispose();
+    _bannerAd?.dispose();
   }
 
-  bool visible = false;
-
-  loadProgress() {
-    if (visible == true) {
-      setState(() {
-        visible = false;
-      });
-    } else {
-      setState(() {
-        visible = true;
-      });
-    }
+  void loadProgress() {
+    setState(() {
+      visible = !visible;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
+    final args =
+        ModalRoute.of(context)!.settings.arguments as PassDataBetweenScreens;
+    type = args.title;
+    defaultIndex = int.parse(args.message);
+
     return PageView.builder(
-        controller: PageController(
-            initialPage: index, keepPage: true, viewportFraction: 1),
-        itemBuilder: (context, index) {
-          return Scaffold(
-            appBar: AppBar(
-                title: Text(
+      controller: PageController(initialPage: defaultIndex!, keepPage: true),
+      itemBuilder: (context, index) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
               "Gif No. ${index + 1}",
-              //20 & 2
-              style: Theme.of(context).appBarTheme.toolbarTextStyle,
-            )),
-            body: SafeArea(
-              child: SingleChildScrollView(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
-                    child: Card(
-                      child: Container(
-                        padding:
-                            EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            CachedNetworkImage(
-                              imageUrl: Gifs.gifs_path[index],
-                              placeholder: (context, url) =>
-                                  const CircularProgressIndicator(),
+              style: Theme.of(context).appBarTheme.titleTextStyle,
+            ),
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(1.93 * SizeConfig.widthMultiplier),
+                  child: Card(
+                    color: Theme.of(context).cardColor,
+                    shadowColor: Theme.of(context).shadowColor,
+                    elevation: 4.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.all(
+                        1.93 * SizeConfig.widthMultiplier,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: Gifs.gifsPath[index],
+                              placeholder: (context, url) => Center(
+                                child: CircularProgressIndicator(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
                               errorWidget: (context, url, error) =>
                                   const Icon(Icons.error),
                               fadeOutDuration: const Duration(seconds: 1),
                               fadeInDuration: const Duration(seconds: 3),
                             ),
-
-                            Padding(
-                              padding: EdgeInsets.all(
-                                  1.93 * SizeConfig.widthMultiplier),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: <Widget>[
-                                  Visibility(
-                                      maintainSize: true,
-                                      maintainAnimation: true,
-                                      maintainState: true,
-                                      visible: visible,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Text(
-                                            "We are downloading your image to share.. \nBe Paitence Thanks!!",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1,
-                                          ),
-                                          CircularProgressIndicator(),
-                                        ],
-                                      )),
-                                  Builder(builder: (BuildContext context) {
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(
+                              1.93 * SizeConfig.widthMultiplier,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                Visibility(
+                                  maintainSize: true,
+                                  maintainAnimation: true,
+                                  maintainState: true,
+                                  visible: visible,
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        "We are downloading your image to share.. \nBe Paitence Thanks!!",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      CircularProgressIndicator(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Builder(
+                                  builder: (buttonContext) {
                                     return ElevatedButton(
                                       onPressed: () async {
-                                        setState(() {});
                                         loadProgress();
                                         await shareGIFImageFromUrl(
-                                            context, index);
+                                          buttonContext,
+                                          index,
+                                        );
                                         loadProgress();
                                       },
-                                      child: Text('Share'),
+                                      child: const Text('Share'),
                                     );
-                                  })
-                                ],
-                              ),
+                                  },
+                                ),
+                              ],
                             ),
-                            Divider(),
-                            //banner
-                            Container(
-                              height: bannerAd1.size.height.toDouble(),
-                              width: bannerAd1.size.width.toDouble(),
-                              child: AdWidget(ad: bannerAd1),
-                            ),
-                            //banner
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          );
-        });
+          ),
+          bottomNavigationBar: BottomAppBar(
+            child: _bannerAd != null
+                ? SizedBox(
+                    width: _bannerAd!.size.width.toDouble(),
+                    height: _bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: _bannerAd!),
+                  )
+                : Container(),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> shareGIFImageFromUrl(BuildContext context, int index) async {
     try {
-      var request = await HttpClient().getUrl(Uri.parse(Gifs.gifs_path[index]));
+      var request = await HttpClient().getUrl(Uri.parse(Gifs.gifsPath[index]));
       var response = await request.close();
       Uint8List bytes = await consolidateHttpClientResponseBytes(response);
       final tempDir = await getTemporaryDirectory();
       final path = '${tempDir.path}/image.gif';
       File(path).writeAsBytesSync(bytes);
-      final files = <XFile>[];
-      final box = context.findRenderObject() as RenderBox?;
+      final files = <XFile>[XFile(path, name: "image")];
 
-      files.add(XFile(path, name: "image"));
-
-      await Share.shareXFiles([files[0]],
-          text: "Share GIF",
-          subject: "subject",
-          sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size);
-      //await Share.shareFiles([path]);
+      final box = context.findRenderObject();
+      if (box is RenderBox) {
+        await Share.shareXFiles(
+          [XFile(path, name: "image.gif")],
+          text:
+              "GIF Shared with ${Strings.appName}\nDownload App Now: ${Strings.appUrl}",
+          sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
+        );
+      } else {
+        await Share.shareXFiles(
+          [XFile(path, name: "image.gif")],
+          text:
+              "GIF Shared with ${Strings.appName}\nDownload App Now: ${Strings.appUrl}",
+        );
+      }
     } catch (e) {
-      print('error: $e');
+      debugPrint('error: $e');
     }
-
-    facebookAppEvents.logEvent(
-      name: "GIF Share",
-      parameters: {
-        'gif_image_url': '$Gifs.gifs_path[index]',
-      },
-    );
   }
 
-  _requestPermission() async {
+  void _requestPermission() async {
     Map<Permission, PermissionStatus> statuses = await [
       Permission.storage,
     ].request();
 
     final info = statuses[Permission.storage].toString();
-    print(info);
-    //_toastInfo(info);
+    debugPrint(info);
   }
 }

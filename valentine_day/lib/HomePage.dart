@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:valentine_day/data/Messages.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:facebook_app_events/facebook_app_events.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:valentine_day/widgets/CustomFBTextWidget.dart';
@@ -12,7 +10,10 @@ import 'package:valentine_day/widgets/CustomFeatureCard.dart';
 import 'package:valentine_day/widgets/CustomFullCard.dart';
 import 'package:valentine_day/widgets/MessageWidget3.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'data/AdService.dart';
+import 'AdManager/ad_helper.dart';
+import 'AdManager/ad_manager.dart';
+import 'Enums/project_routes_enum.dart';
+import 'Singleton/project_manager.dart';
 import 'data/Gifs.dart';
 import 'data/Images.dart';
 import 'data/Quotes.dart';
@@ -21,6 +22,8 @@ import 'data/Status.dart';
 import 'data/Strings.dart';
 import 'utils/SizeConfig.dart';
 import 'MyDrawer.dart';
+import 'utils/pass_data_between_screens.dart';
+import 'widgets/AppStoreAppsItemWidget1.dart';
 import 'widgets/AppStoreItemWidget2.dart';
 import 'widgets/CustomBannerWidget.dart';
 import 'widgets/MessageWidget1.dart';
@@ -33,45 +36,54 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  static final facebookAppEvents = FacebookAppEvents();
-  String interstitialTag = "";
+class _HomePageState extends State<HomePage>
+    implements ProjectListener, AdListener {
   String _authStatus = 'Unknown';
 
-  late BannerAd bannerAd1, bannerAd2, bannerAd3;
-  bool isBannerAdLoaded = false;
+  BannerAd? _bannerAd;
+  ProjectManager projectManager = ProjectManager.instance;
+  AdManager adManager = AdManager.instance;
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addPostFrameCallback((_) => initPlugin());
-    AdService.createInterstialAd();
+    WidgetsFlutterBinding.ensureInitialized().addPostFrameCallback(
+      (_) => initPlugin(),
+    );
 
-    bannerAd1 = GetBannerAd();
-    bannerAd2 = GetBannerAd();
-    bannerAd3 = GetBannerAd();
+    projectManager.listener = this;
+
+    adManager.adListener = this;
+
+    projectManager.startApp();
+
+    adManager.loadAdsInAdManager();
   }
 
-  BannerAd GetBannerAd() {
+  BannerAd loadBannerAd() {
     return BannerAd(
-        size: AdSize.mediumRectangle,
-        adUnitId: Strings.iosAdmobBannerId,
-        listener: BannerAdListener(onAdLoaded: (_) {
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
-            isBannerAdLoaded = true;
+            _bannerAd = ad as BannerAd;
           });
-        }, onAdFailedToLoad: (ad, error) {
-          isBannerAdLoaded = true;
+        },
+        onAdFailedToLoad: (ad, err) {
+          debugPrint('Failed to load a banner ad: ${err.message}');
           ad.dispose();
-        }),
-        request: AdRequest())
-      ..load();
+        },
+      ),
+    );
   }
 
   @override
   void dispose() {
     super.dispose();
-    bannerAd2.dispose();
-    bannerAd3.dispose();
+    debugPrint("Home Page: Dispose Called");
+    projectManager.listener = null;
+    adManager.adListener = null;
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -128,8 +140,10 @@ class _HomePageState extends State<HomePage> {
                 child: Padding(
                   padding: EdgeInsets.all(SizeConfig.width(8)),
                   child: Center(
-                    child: Text("Choose Wishes From Below",
-                        style: Theme.of(context).textTheme.titleLarge),
+                    child: Text(
+                      "Choose Wishes From Below",
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                   ),
                 ),
               ),
@@ -142,8 +156,10 @@ class _HomePageState extends State<HomePage> {
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
                       child: Center(
-                        child: Text("Choose Language For Valentine Day",
-                            style: Theme.of(context).textTheme.titleLarge),
+                        child: Text(
+                          "Choose Language For Valentine Day",
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                       ),
                     ),
                     // Honey
@@ -152,84 +168,57 @@ class _HomePageState extends State<HomePage> {
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Padding(
-                          padding:
-                              EdgeInsets.only(bottom: SizeConfig.height(6.0)),
+                          padding: EdgeInsets.only(
+                            bottom: SizeConfig.height(6.0),
+                          ),
                           child: Row(
                             children: [
                               //English
-                              InkWell(
-                                child: MessageWidget3(
-                                  headLine: "English",
-                                  subTitle: Messages.english_data[2],
-                                  imagePath:
-                                      "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                  color: Colors.orange,
-                                ),
-                                onTap: () {
-                                  print("English Message Clicked");
-                                  interstitialTag = "lang_english";
-                                  facebookAppEvents.logEvent(
-                                    name: "Message List",
-                                    parameters: {
-                                      'button_id': 'lang_english_button',
-                                    },
+                              MessageWidget3(
+                                headLine: "English",
+                                subTitle: Messages.englishData[2],
+                                imagePath: Gifs.gifsPath[25],
+                                color: Colors.orange,
+                                callback: () {
+                                  debugPrint("English Message Clicked");
+                                  ProjectManager.instance.clickOnButton(
+                                    ProjectRoutes.messagesList.toString(),
+                                    PassDataBetweenScreens("1", "1"),
                                   );
-                                  AdService.context = context;
-                                  AdService.interstitialTag = "lang_english";
-                                  AdService.showInterstitialAd();
                                 },
                               ),
 
                               Column(
                                 children: [
-                                  InkWell(
-                                    child: MessageWidget1(
-                                      headLine: "हिंदी",
-                                      subTitle: Messages.hindi_data[0],
-                                      imagePath:
-                                          "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                      color: Colors.brown,
-                                    ),
-                                    onTap: () {
-                                      print("Hindi Clicked");
-                                      interstitialTag = "lang_hindi";
-                                      facebookAppEvents.logEvent(
-                                        name: "Message List",
-                                        parameters: {
-                                          'button_id': 'lang_hindi_button',
-                                        },
+                                  MessageWidget1(
+                                    headLine: "हिंदी",
+                                    subTitle: Messages.hindiData[0],
+                                    imagePath: Gifs.gifsPath[23],
+
+                                    color: Colors.brown,
+                                    callback: () {
+                                      debugPrint("Hindi Message Clicked");
+                                      ProjectManager.instance.clickOnButton(
+                                        ProjectRoutes.messagesList.toString(),
+                                        PassDataBetweenScreens("4", "4"),
                                       );
-                                      AdService.context = context;
-                                      AdService.interstitialTag = "lang_hindi";
-                                      AdService.showInterstitialAd();
                                     },
                                   ),
-                                  SizedBox(
-                                    height: SizeConfig.height(8.0),
-                                  ),
+
+                                  SizedBox(height: SizeConfig.height(8.0)),
 
                                   //Spainsh
-                                  InkWell(
-                                    child: MessageWidget1(
-                                      headLine: "Español",
-                                      subTitle: Messages.spanish_data[1],
-                                      imagePath:
-                                          "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                      color: Colors.deepOrangeAccent,
-                                    ),
-                                    onTap: () {
-                                      print("For All Clicked");
-                                      interstitialTag = "lang_spanish";
-                                      facebookAppEvents.logEvent(
-                                        name: "Message List",
-                                        parameters: {
-                                          'button_id': 'lang_spanish_button',
-                                        },
+                                  MessageWidget1(
+                                    headLine: "Español",
+                                    subTitle: Messages.spanishData[1],
+                                    imagePath: Gifs.gifsPath[20],
+                                    color: Colors.deepOrangeAccent,
+                                    callback: () {
+                                      debugPrint("Spanish Message Clicked");
+                                      ProjectManager.instance.clickOnButton(
+                                        ProjectRoutes.messagesList.toString(),
+                                        PassDataBetweenScreens("7", "7"),
                                       );
-                                      AdService.context = context;
-                                      AdService.interstitialTag =
-                                          "lang_spanish";
-                                      AdService.showInterstitialAd();
                                     },
                                   ),
                                 ],
@@ -243,123 +232,86 @@ class _HomePageState extends State<HomePage> {
                     // rikhil
 
                     // Abdul
-
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Padding(
-                          padding:
-                              EdgeInsets.only(bottom: SizeConfig.height(6.0)),
+                          padding: EdgeInsets.only(
+                            bottom: SizeConfig.height(6.0),
+                          ),
                           child: Row(
                             children: [
                               Column(
                                 children: [
                                   // German
-                                  InkWell(
-                                    child: MessageWidget1(
-                                      headLine: "Deutsche",
-                                      subTitle: Messages.german_data[0],
-                                      imagePath:
-                                          "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                      color: Colors.redAccent,
-                                    ),
-                                    onTap: () {
-                                      print("German Clicked");
-                                      interstitialTag = "lang_german";
-                                      facebookAppEvents.logEvent(
-                                        name: "Message List",
-                                        parameters: {
-                                          'button_id': 'lang_german_button',
-                                        },
+                                  MessageWidget1(
+                                    headLine: "Deutsche",
+                                    subTitle: Messages.germanData[0],
+                                    imagePath: Gifs.gifsPath[19],
+
+                                    color: Colors.redAccent,
+                                    callback: () {
+                                      debugPrint("German Message Clicked");
+                                      ProjectManager.instance.clickOnButton(
+                                        ProjectRoutes.messagesList.toString(),
+                                        PassDataBetweenScreens("3", "3"),
                                       );
-                                      AdService.context = context;
-                                      AdService.interstitialTag = "lang_german";
-                                      AdService.showInterstitialAd();
                                     },
                                   ),
-                                  SizedBox(
-                                    height: SizeConfig.height(8.0),
-                                  ),
+
+                                  SizedBox(height: SizeConfig.height(8.0)),
 
                                   // French
-                                  InkWell(
-                                      child: MessageWidget1(
-                                        headLine: "français",
-                                        subTitle: Messages.french_data[0],
-                                        imagePath:
-                                            "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                        color: Colors.blueGrey,
-                                      ),
-                                      onTap: () {
-                                        print("français Clicked");
-                                        interstitialTag = "lang_french";
-                                        facebookAppEvents.logEvent(
-                                          name: "Message List",
-                                          parameters: {
-                                            'button_id': 'lang_french_button',
-                                          },
-                                        );
-                                        AdService.context = context;
-                                        AdService.interstitialTag =
-                                            "lang_french";
-                                        AdService.showInterstitialAd();
-                                      }),
+                                  MessageWidget1(
+                                    headLine: "français",
+                                    subTitle: Messages.frenchData[0],
+                                    imagePath: Gifs.gifsPath[18],
+
+                                    color: Colors.blueGrey,
+                                    callback: () {
+                                      debugPrint("French Message Clicked");
+                                      ProjectManager.instance.clickOnButton(
+                                        ProjectRoutes.messagesList.toString(),
+                                        PassDataBetweenScreens("2", "2"),
+                                      );
+                                    },
+                                  ),
                                 ],
                               ),
                               Column(
                                 children: [
                                   // Italy
-                                  InkWell(
-                                    child: MessageWidget1(
-                                      headLine: "Italiano",
-                                      subTitle: Messages.italy_data[5],
-                                      imagePath:
-                                          "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                      color: Colors.green[400],
-                                    ),
-                                    onTap: () {
-                                      print("Italian Clicked");
-                                      interstitialTag = "lang_italian";
-                                      facebookAppEvents.logEvent(
-                                        name: "Message List",
-                                        parameters: {
-                                          'button_id': 'lang_italian_button',
-                                        },
+                                  MessageWidget1(
+                                    headLine: "Italiano",
+                                    subTitle: Messages.italyData[5],
+                                    imagePath: Gifs.gifsPath[15],
+
+                                    color: Colors.green.shade400,
+                                    callback: () {
+                                      debugPrint("Italian Message Clicked");
+                                      ProjectManager.instance.clickOnButton(
+                                        ProjectRoutes.messagesList.toString(),
+                                        PassDataBetweenScreens("5", "5"),
                                       );
-                                      AdService.context = context;
-                                      AdService.interstitialTag =
-                                          "lang_italian";
-                                      AdService.showInterstitialAd();
                                     },
                                   ),
 
-                                  SizedBox(
-                                    height: SizeConfig.height(8.0),
-                                  ),
+                                  SizedBox(height: SizeConfig.height(8.0)),
 
                                   //Portugal
-                                  InkWell(
-                                    child: MessageWidget1(
-                                      headLine: "Português",
-                                      subTitle: Messages.portugal_data[3],
-                                      imagePath:
-                                          "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/23.gif",
-                                      color: Colors.deepPurpleAccent,
-                                    ),
-                                    onTap: () {
-                                      print("Portuguese Clicked");
-                                      interstitialTag = "lang_portuguese";
-                                      facebookAppEvents.logEvent(
-                                        name: "Message List",
-                                        parameters: {
-                                          'button_id': 'lang_portuguese_button',
-                                        },
+                                  MessageWidget1(
+                                    headLine: "Português",
+                                    subTitle: Messages.portugalData[3],
+                                    imagePath: Gifs.gifsPath[27],
+
+                                    color: Colors.deepPurpleAccent,
+                                    callback: () {
+                                      debugPrint("Portugal Message Clicked");
+                                      ProjectManager.instance.clickOnButton(
+                                        ProjectRoutes.messagesList.toString(),
+                                        PassDataBetweenScreens("6", "6"),
                                       );
-                                      AdService.context = context;
-                                      AdService.interstitialTag =
-                                          "lang_portuguese";
-                                      AdService.showInterstitialAd();
                                     },
                                   ),
                                 ],
@@ -374,21 +326,23 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              // Wishes end
 
-              Divider(),
+              // Wishes end
+              const Divider(),
               DesignerContainer(
                 isLeft: false,
                 child: Column(
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("👋,Games For You | 👗 🆙 | 🫣 🔍 | 🧩🤔",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "👋,Games For You | 👗 🆙 | 🫣 🔍 | 🧩🤔",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: SingleChildScrollView(
+                      child: const SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
@@ -429,7 +383,7 @@ class _HomePageState extends State<HomePage> {
 
                 //banner
               ),
-              Divider(),
+              const Divider(),
               // Wish Creator Start
               DesignerContainer(
                 isLeft: false,
@@ -437,8 +391,10 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("Generate Valentine's Day E-Cards",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "Generate Valentine's Day E-Cards",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
@@ -446,35 +402,27 @@ class _HomePageState extends State<HomePage> {
                         child: IgnorePointer(
                           child: CustomBannerWidget(
                             size: MediaQuery.of(context).size,
-                            imagePath: Gifs.gifs_path[8],
+                            imagePath: Gifs.gifsPath[8],
                             buttonText: "Generate Greeting",
                             topText: "Send Valentine's",
                             middleText: "Wishes & E-Cards",
                             bottomText: "Share it With Your Loved Ones",
-                            ontap: () {},
                           ),
                         ),
                         onTap: () {
-                          print("Meme Clicked");
-                          interstitialTag = "meme";
-                          facebookAppEvents.logEvent(
-                            name: "Meme Generator",
-                            parameters: {
-                              'button_id': 'meme_button',
-                            },
+                          debugPrint("Quotes Clicked");
+                          ProjectManager.instance.clickOnButton(
+                            ProjectRoutes.memeGenerator.toString(),
                           );
-                          AdService.context = context;
-                          AdService.interstitialTag = "meme";
-                          AdService.showInterstitialAd();
                         },
                       ),
                     ),
                   ],
                 ),
               ),
-              // Wish Creator End
 
-              Divider(),
+              // Wish Creator End
+              const Divider(),
 
               // Quotes Start
               DesignerContainer(
@@ -483,8 +431,10 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("Valentine's Day Quotes",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "Valentine's Day Quotes",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
@@ -493,38 +443,44 @@ class _HomePageState extends State<HomePage> {
                           width: size.width - SizeConfig.width(16),
                           height: size.width / 2,
                           decoration: BoxDecoration(
-                            color: MediaQuery.of(context).platformBrightness ==
+                            color:
+                                MediaQuery.of(context).platformBrightness ==
                                     Brightness.dark
                                 ? Theme.of(context).primaryColorDark
                                 : Colors.yellow[900],
                             borderRadius: BorderRadius.only(
-                              bottomLeft:
-                                  Radius.circular(SizeConfig.height(20)),
+                              bottomLeft: Radius.circular(
+                                SizeConfig.height(20),
+                              ),
                               topRight: Radius.circular(SizeConfig.height(20)),
                             ),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
-                                  offset: Offset(0, 0),
-                                  blurRadius: 4,
-                                  color: Colors.grey),
+                                offset: Offset(0, 0),
+                                blurRadius: 4,
+                                color: Colors.grey,
+                              ),
                             ],
                           ),
                           child: Stack(
                             children: [
-                              Icon(Icons.format_quote,
-                                  color:
-                                      Theme.of(context).primaryIconTheme.color),
+                              Icon(
+                                Icons.format_quote,
+                                color: Theme.of(context).primaryIconTheme.color,
+                              ),
                               Positioned(
                                 top: 20,
                                 width: size.width - SizeConfig.width(16),
                                 child: Center(
                                   child: Padding(
-                                    padding:
-                                        EdgeInsets.all(SizeConfig.width(8)),
+                                    padding: EdgeInsets.all(
+                                      SizeConfig.width(8),
+                                    ),
                                     child: Text(
-                                      Quotes.quotes_data[7],
-                                      style:
-                                          Theme.of(context).textTheme.bodyText1,
+                                      Quotes.quotesData[7],
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -536,15 +492,17 @@ class _HomePageState extends State<HomePage> {
                                 right: 0,
                                 child: Center(
                                   child: Padding(
-                                    padding:
-                                        EdgeInsets.all(SizeConfig.width(8)),
+                                    padding: EdgeInsets.all(
+                                      SizeConfig.width(8),
+                                    ),
                                     child: Text(
                                       "Tap Here to Continue",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyText1!
+                                          .bodyMedium!
                                           .copyWith(
-                                              color: Colors.purpleAccent[700]!),
+                                            color: Colors.purpleAccent[700]!,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -553,99 +511,89 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         onTap: () {
-                          print("Quotes Clicked");
-                          interstitialTag = "quotes";
-                          facebookAppEvents.logEvent(
-                            name: "Quotes List",
-                            parameters: {
-                              'button_id': 'Quotes_button',
-                            },
+                          debugPrint("Quotes Clicked");
+                          ProjectManager.instance.clickOnButton(
+                            ProjectRoutes.quotesList.toString(),
                           );
-                          AdService.context = context;
-                          AdService.interstitialTag = "quotes";
-                          AdService.showInterstitialAd();
                         },
                       ),
                     ),
                   ],
                 ),
               ),
+
               // Quotes End
-
-              Divider(),
-              //Native Ad
-              DesignerContainer(
-                isLeft: false,
-                child: Container(
-                  height: bannerAd2.size.height.toDouble(),
-                  width: bannerAd2.size.width.toDouble(),
-                  child: AdWidget(ad: bannerAd2),
-                ),
-              ),
-
-              Divider(),
+              const Divider(),
 
               //Gifs Start
-
               DesignerContainer(
                 isLeft: true,
                 child: Column(
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("Valentine's Day Gifs",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "Valentine's Day Gifs",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
-                    InkWell(
-                      child: IgnorePointer(
-                        child: Padding(
-                          padding: EdgeInsets.all(SizeConfig.width(8)),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Gifs.gifs_path[5],
-                                    ontap: () {}),
-                                CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Gifs.gifs_path[3],
-                                    ontap: () {}),
-                                CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Gifs.gifs_path[21],
-                                    ontap: () {}),
-                                CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Gifs.gifs_path[22],
-                                    ontap: () {}),
-                              ],
+                    Padding(
+                      padding: EdgeInsets.all(SizeConfig.width(8)),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            CustomFeatureCard(
+                              size: size,
+                              imageUrl: Gifs.gifsPath[5],
+                              onTap: () {
+                                debugPrint("Gifs Clicked");
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.gifsList.toString(),
+                                );
+                              },
                             ),
-                          ),
+                            CustomFeatureCard(
+                              size: size,
+                              imageUrl: Gifs.gifsPath[3],
+                              onTap: () {
+                                debugPrint("Gifs Clicked");
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.gifsList.toString(),
+                                );
+                              },
+                            ),
+                            CustomFeatureCard(
+                              size: size,
+                              imageUrl: Gifs.gifsPath[21],
+                              onTap: () {
+                                debugPrint("Gifs Clicked");
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.gifsList.toString(),
+                                );
+                              },
+                            ),
+                            CustomFeatureCard(
+                              size: size,
+                              imageUrl: Gifs.gifsPath[22],
+                              onTap: () {
+                                debugPrint("Gifs Clicked");
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.gifsList.toString(),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                      onTap: () {
-                        print("Gifs Clicked");
-                        interstitialTag = "gif";
-                        facebookAppEvents.logEvent(
-                          name: "GIF List",
-                          parameters: {
-                            'button_id': 'gif_button',
-                          },
-                        );
-                        AdService.context = context;
-                        AdService.interstitialTag = "gif";
-                        AdService.showInterstitialAd();
-                      },
                     ),
                   ],
                 ),
               ),
-              // Gifs End
 
-              Divider(),
+              // Gifs End
+              const Divider(),
 
               // Shayari start
               DesignerContainer(
@@ -654,8 +602,10 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("Valentine's Day Shayari",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "Valentine's Day Shayari",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
@@ -664,38 +614,44 @@ class _HomePageState extends State<HomePage> {
                           width: size.width - SizeConfig.width(16),
                           height: size.width / 2,
                           decoration: BoxDecoration(
-                            color: MediaQuery.of(context).platformBrightness ==
+                            color:
+                                MediaQuery.of(context).platformBrightness ==
                                     Brightness.dark
                                 ? Theme.of(context).primaryColorDark
                                 : Colors.pink[900],
                             borderRadius: BorderRadius.only(
-                              bottomLeft:
-                                  Radius.circular(SizeConfig.height(20)),
+                              bottomLeft: Radius.circular(
+                                SizeConfig.height(20),
+                              ),
                               topRight: Radius.circular(SizeConfig.height(20)),
                             ),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
-                                  offset: Offset(0, 0),
-                                  blurRadius: 4,
-                                  color: Colors.grey),
+                                offset: Offset(0, 0),
+                                blurRadius: 4,
+                                color: Colors.grey,
+                              ),
                             ],
                           ),
                           child: Stack(
                             children: [
-                              Icon(Icons.format_quote,
-                                  color:
-                                      Theme.of(context).primaryIconTheme.color),
+                              Icon(
+                                Icons.format_quote,
+                                color: Theme.of(context).primaryIconTheme.color,
+                              ),
                               Positioned(
                                 top: 20,
                                 width: size.width - SizeConfig.width(16),
                                 child: Center(
                                   child: Padding(
-                                    padding:
-                                        EdgeInsets.all(SizeConfig.width(8)),
+                                    padding: EdgeInsets.all(
+                                      SizeConfig.width(8),
+                                    ),
                                     child: Text(
-                                      Shayari.shayari_data[7],
-                                      style:
-                                          Theme.of(context).textTheme.bodyText1,
+                                      Shayari.shayariData[7],
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -707,13 +663,14 @@ class _HomePageState extends State<HomePage> {
                                 right: 0,
                                 child: Center(
                                   child: Padding(
-                                    padding:
-                                        EdgeInsets.all(SizeConfig.width(8)),
+                                    padding: EdgeInsets.all(
+                                      SizeConfig.width(8),
+                                    ),
                                     child: Text(
                                       "Tap Here to Continue",
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyText1!
+                                          .bodyMedium!
                                           .copyWith(color: Colors.yellow[700]!),
                                     ),
                                   ),
@@ -723,69 +680,60 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         onTap: () {
-                          print("Shayari Clicked");
-                          interstitialTag = "shayari";
-                          facebookAppEvents.logEvent(
-                            name: "Shayari List",
-                            parameters: {
-                              'button_id': 'Shayari_button',
-                            },
+                          debugPrint("Quotes Clicked");
+                          ProjectManager.instance.clickOnButton(
+                            ProjectRoutes.shayariList.toString(),
                           );
-                          AdService.context = context;
-                          AdService.interstitialTag = "shayari";
-                          AdService.showInterstitialAd();
                         },
                       ),
                     ),
                   ],
                 ),
               ),
-              // Shayari end
 
-              Divider(),
-              DesignerContainer(
-                  isLeft: false,
-                  child: Column(children: [
+              // Shayari end
+              const Divider(),
+              /*DesignerContainer(
+                isLeft: false,
+                child: Column(
+                  children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("✋ Need Your HELP? 😊",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "✋ Need Your HELP? 😊",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
                       child: Text(
-                          "Your suggestions are very important to improve your experience in next APP Update. Let me know how our team can improve. Thanks! and click the BUTTON Below 👇🏻 to RATE this app.",
-                          style: Theme.of(context).textTheme.subtitle1),
+                        "Your suggestions are very important to improve your experience in next APP Update. Let me know how our team can improve. Thanks! and click the BUTTON Below 👇🏻 to RATE this app.",
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
                     ElevatedButton(
-                        onPressed: () {
-                          Strings.RateNReview();
-                        },
-                        child: const Text("⬇️ Rate & Review ⬇️"))
-                  ])),
-
-              Divider(),
-              //Native Ad
-              DesignerContainer(
-                isLeft: true,
-                child: Container(
-                  height: bannerAd3.size.height.toDouble(),
-                  width: bannerAd3.size.width.toDouble(),
-                  child: AdWidget(ad: bannerAd3),
+                      onPressed: () {
+                        Strings.RateNReview();
+                      },
+                      child: const Text("⬇️ Rate & Review ⬇️"),
+                    ),
+                  ],
                 ),
               ),
+  */
+              const Divider(),
 
-              Divider(),
               //Image Start
-
               DesignerContainer(
                 isLeft: false,
                 child: Column(
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("Valentine's Wishes Images",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "Valentine's Wishes Images",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
@@ -797,36 +745,33 @@ class _HomePageState extends State<HomePage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
                                 CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Images.images_path[7],
-                                    ontap: null),
+                                  size: size,
+                                  imageUrl: Images.imagesPath[7],
+                                  onTap: null,
+                                ),
                                 CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Images.images_path[9],
-                                    ontap: null),
+                                  size: size,
+                                  imageUrl: Images.imagesPath[9],
+                                  onTap: null,
+                                ),
                                 CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Images.images_path[13],
-                                    ontap: null),
+                                  size: size,
+                                  imageUrl: Images.imagesPath[13],
+                                  onTap: null,
+                                ),
                                 CustomFeatureCard(
-                                    size: size,
-                                    imageUrl: Images.images_path[12],
-                                    ontap: null),
+                                  size: size,
+                                  imageUrl: Images.imagesPath[12],
+                                  onTap: null,
+                                ),
                               ],
                             ),
                           ),
                           onTap: () {
-                            print("Images Clicked");
-                            interstitialTag = "image";
-                            facebookAppEvents.logEvent(
-                              name: "Image List",
-                              parameters: {
-                                'button_id': 'Image_button',
-                              },
+                            debugPrint("Images Clicked");
+                            ProjectManager.instance.clickOnButton(
+                              ProjectRoutes.imagesList.toString(),
                             );
-                            AdService.context = context;
-                            AdService.interstitialTag = "image";
-                            AdService.showInterstitialAd();
                           },
                         ),
                       ),
@@ -834,85 +779,83 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              // Image End
 
-              Divider(),
+              // Image End
+              const Divider(),
 
               // Status Start
-
               DesignerContainer(
                 isLeft: true,
                 child: Column(
                   children: [
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
-                      child: Text("Valentine's Day FB Whatsapp Status ",
-                          style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(
+                        "Valentine's Day FB Whatsapp Status ",
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.all(SizeConfig.width(8)),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        child: InkWell(
-                          child: IgnorePointer(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                CustomFBTextWidget(
-                                  size: size,
-                                  text: Status.status_data[2],
-                                  color: Colors.orange[900],
-                                  url:
-                                      "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/36.gif",
-                                  isLeft: false,
-                                  ontap: null,
-                                ),
-                                SizedBox(width: SizeConfig.width(8)),
-                                CustomFBTextWidget(
-                                  size: size,
-                                  text: Status.status_data[3],
-                                  color: Colors.blue,
-                                  url:
-                                      "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/36.gif",
-                                  isLeft: false,
-                                  ontap: null,
-                                ),
-                                SizedBox(width: SizeConfig.width(8)),
-                                CustomFBTextWidget(
-                                  size: size,
-                                  text: Status.status_data[4],
-                                  color: Colors.indigoAccent,
-                                  url:
-                                      "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/36.gif",
-                                  isLeft: false,
-                                  ontap: null,
-                                ),
-                                SizedBox(width: SizeConfig.width(8)),
-                                CustomFBTextWidget(
-                                  size: size,
-                                  text: Status.status_data[1],
-                                  color: Colors.purple,
-                                  url:
-                                      "http://andiwiniosapps.in/valentine_day/valentine_day_gifs/36.gif",
-                                  isLeft: false,
-                                  ontap: null,
-                                ),
-                              ],
-                            ),
-                          ),
-                          onTap: () {
-                            print("Status Clicked");
-                            interstitialTag = "status";
-                            facebookAppEvents.logEvent(
-                              name: "Status List",
-                              parameters: {
-                                'button_id': 'Status_button',
+
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            CustomFBTextWidget(
+                              size: size,
+                              text: Status.statusData[2],
+                              color: Colors.orange.shade900,
+                              url: Gifs.gifsPath[35],
+
+                              isLeft: false,
+                              ontap: () {
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.statusList.toString(),
+                                );
                               },
-                            );
-                            AdService.context = context;
-                            AdService.interstitialTag = "status";
-                            AdService.showInterstitialAd();
-                          },
+                            ),
+                            SizedBox(width: SizeConfig.width(8)),
+                            CustomFBTextWidget(
+                              size: size,
+                              text: Status.statusData[3],
+                              color: Colors.blue,
+                              url: Gifs.gifsPath[35],
+                              isLeft: false,
+                              ontap: () {
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.statusList.toString(),
+                                );
+                              },
+                            ),
+                            SizedBox(width: SizeConfig.width(8)),
+                            CustomFBTextWidget(
+                              size: size,
+                              text: Status.statusData[4],
+                              color: Colors.indigoAccent,
+                              url: Gifs.gifsPath[35],
+                              isLeft: false,
+                              ontap: () {
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.statusList.toString(),
+                                );
+                              },
+                            ),
+                            SizedBox(width: SizeConfig.width(8)),
+                            CustomFBTextWidget(
+                              size: size,
+                              text: Status.statusData[1],
+                              color: Colors.purple,
+                              url: Gifs.gifsPath[35],
+                              isLeft: false,
+                              ontap: () {
+                                ProjectManager.instance.clickOnButton(
+                                  ProjectRoutes.statusList.toString(),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -921,56 +864,42 @@ class _HomePageState extends State<HomePage> {
               ),
 
               //Status End
-
-              Divider(),
-              //Native Ad
-              DesignerContainer(
-                isLeft: false,
-                child: Container(
-                  height: bannerAd1.size.height.toDouble(),
-                  width: bannerAd1.size.width.toDouble(),
-                  child: AdWidget(ad: bannerAd1),
-                ),
-              ),
-
-              Divider(),
+              const Divider(),
 
               Padding(
                 padding: EdgeInsets.all(SizeConfig.width(8)),
-                child: Text("Play Game \"Sell Rakhi\"",
-                    style: Theme.of(context).textTheme.titleLarge),
+                child: Text(
+                  "Play Game \"Sell Rakhi\"",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ),
 
               CustomFullCard(
                 size: MediaQuery.of(context).size,
                 imageUrl: "lib/assets/rakhi_game.jpeg",
-                ontap: () {
+                onTap: () {
                   if (Platform.isAndroid) {
                     // Android-specific code
                     print("More Button Clicked");
                     launch(
-                        "https://play.google.com/store/apps/developer?id=Festival+Messages+SMS");
+                      "https://play.google.com/store/apps/developer?id=Festival+Messages+SMS",
+                    );
                   } else if (Platform.isIOS) {
                     // iOS-specific code
                     print("More Button Clicked");
                     launch("https://apps.apple.com/us/app/-/id1434054710");
-
-                    facebookAppEvents.logEvent(
-                      name: "Play Rakshabandhan Game",
-                      parameters: {
-                        'clicked_on_play_rakshabandhan_game': 'Yes',
-                      },
-                    );
                   }
                 },
               ),
 
-              Divider(),
+              const Divider(),
 
               Padding(
                 padding: EdgeInsets.all(SizeConfig.width(8)),
-                child: Text("Apps From Developer",
-                    style: Theme.of(context).textTheme.titleLarge),
+                child: Text(
+                  "Apps From Developer",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ),
 
               SingleChildScrollView(
@@ -980,64 +909,70 @@ class _HomePageState extends State<HomePage> {
                   child: Row(
                     children: <Widget>[
                       //Column1
-                      Column(
+                      const Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is1-ssl.mzstatic.com/image/thumb/Purple117/v4/8f/e7/b5/8fe7b5bc-03eb-808c-2b9e-fc2c12112a45/mzl.jivuavtz.png/292x0w.jpg",
-                              appTitle: "Good Morning Images & Messages",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/good-morning-images-messages-to-wish-greet-gm/id1232993917"),
+                            imageUrl:
+                                "https://is1-ssl.mzstatic.com/image/thumb/Purple117/v4/8f/e7/b5/8fe7b5bc-03eb-808c-2b9e-fc2c12112a45/mzl.jivuavtz.png/292x0w.jpg",
+                            appTitle: "Good Morning Images & Messages",
+                            appUrl:
+                                "https://apps.apple.com/us/app/good-morning-images-messages-to-wish-greet-gm/id1232993917",
+                          ),
                           Divider(),
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is4-ssl.mzstatic.com/image/thumb/Purple114/v4/44/e0/fd/44e0fdb5-667b-5468-7b2f-53638cba539e/AppIcon-1x_U007emarketing-0-7-0-0-85-220.png/292x0w.jpg",
-                              appTitle: "Birthday Status Wishes Quotes",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/birthday-status-wishes-quotes/id1522542709"),
+                            imageUrl:
+                                "https://is4-ssl.mzstatic.com/image/thumb/Purple114/v4/44/e0/fd/44e0fdb5-667b-5468-7b2f-53638cba539e/AppIcon-1x_U007emarketing-0-7-0-0-85-220.png/292x0w.jpg",
+                            appTitle: "Birthday Status Wishes Quotes",
+                            appUrl:
+                                "https://apps.apple.com/us/app/birthday-status-wishes-quotes/id1522542709",
+                          ),
                           Divider(),
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is4-ssl.mzstatic.com/image/thumb/Purple114/v4/1a/58/a4/1a58a480-a0ae-1940-2cf3-38524430f66b/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-7.png/292x0w.jpg",
-                              appTitle: "Astrology Horoscope Lal Kitab",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/astrology-horoscope-lal-kitab/id1448343526"),
+                            imageUrl:
+                                "https://is4-ssl.mzstatic.com/image/thumb/Purple114/v4/1a/58/a4/1a58a480-a0ae-1940-2cf3-38524430f66b/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-7.png/292x0w.jpg",
+                            appTitle: "Astrology Horoscope Lal Kitab",
+                            appUrl:
+                                "https://apps.apple.com/us/app/astrology-horoscope-lal-kitab/id1448343526",
+                          ),
                         ],
                       ),
                       SizedBox(width: SizeConfig.width(3)),
                       //Column2
-                      Column(
+                      const Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is2-ssl.mzstatic.com/image/thumb/Purple124/v4/e9/96/64/e99664d3-1083-5fac-6a0c-61718ee209fd/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-7.png/292x0w.jpg",
-                              appTitle: "Weight Loss My Diet Coach Tips",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/weight-loss-my-diet-coach-tips/id1448343218"),
+                            imageUrl:
+                                "https://is2-ssl.mzstatic.com/image/thumb/Purple124/v4/e9/96/64/e99664d3-1083-5fac-6a0c-61718ee209fd/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-7.png/292x0w.jpg",
+                            appTitle: "Weight Loss My Diet Coach Tips",
+                            appUrl:
+                                "https://apps.apple.com/us/app/weight-loss-my-diet-coach-tips/id1448343218",
+                          ),
                           Divider(),
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is2-ssl.mzstatic.com/image/thumb/Purple127/v4/5f/7c/45/5f7c45c7-fb75-ea39-feaa-a698b0e4b09e/pr_source.jpg/292x0w.jpg",
-                              appTitle: "English Speaking Course Grammar",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/english-speaking-course-learn-grammar-vocabulary/id1233093288"),
+                            imageUrl:
+                                "https://is2-ssl.mzstatic.com/image/thumb/Purple127/v4/5f/7c/45/5f7c45c7-fb75-ea39-feaa-a698b0e4b09e/pr_source.jpg/292x0w.jpg",
+                            appTitle: "English Speaking Course Grammar",
+                            appUrl:
+                                "https://apps.apple.com/us/app/english-speaking-course-learn-grammar-vocabulary/id1233093288",
+                          ),
                           Divider(),
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is4-ssl.mzstatic.com/image/thumb/Purple128/v4/50/ad/82/50ad82d9-0d82-5007-fcdd-cc47c439bfd0/AppIcon-0-1x_U007emarketing-0-85-220-10.png/292x0w.jpg",
-                              appTitle: "English Hindi Language Diction",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/english-hindi-language-diction/id1441243874"),
+                            imageUrl:
+                                "https://is4-ssl.mzstatic.com/image/thumb/Purple128/v4/50/ad/82/50ad82d9-0d82-5007-fcdd-cc47c439bfd0/AppIcon-0-1x_U007emarketing-0-85-220-10.png/292x0w.jpg",
+                            appTitle: "English Hindi Language Diction",
+                            appUrl:
+                                "https://apps.apple.com/us/app/english-hindi-language-diction/id1441243874",
+                          ),
                         ],
                       ),
                       SizedBox(width: SizeConfig.width(3)),
-                      //Column3
 
-                      Column(
+                      //Column3
+                      const Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
@@ -1049,33 +984,36 @@ class _HomePageState extends State<HomePage> {
                                       "https://apps.apple.com/us/app/celebrate-happy-new-year-2019/id1447735210"),
                               Divider(),*/
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is1-ssl.mzstatic.com/image/thumb/Purple118/v4/79/1e/61/791e61de-500c-6c97-3947-8abbc6b887e3/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-7.png/292x0w.jpg",
-                              appTitle: "Bangladesh Passport Visa Biman",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/bangladesh-passport-visa-biman/id1443074171"),
+                            imageUrl:
+                                "https://is1-ssl.mzstatic.com/image/thumb/Purple118/v4/79/1e/61/791e61de-500c-6c97-3947-8abbc6b887e3/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-7.png/292x0w.jpg",
+                            appTitle: "Bangladesh Passport Visa Biman",
+                            appUrl:
+                                "https://apps.apple.com/us/app/bangladesh-passport-visa-biman/id1443074171",
+                          ),
                           Divider(),
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is1-ssl.mzstatic.com/image/thumb/Purple126/v4/dd/34/c3/dd34c3e8-5c9f-51aa-a3eb-3a203f5fd49b/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-10.png/292x0w.jpg",
-                              appTitle: "Complete Spoken English Course",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/complete-spoken-english-course/id1440118617"),
+                            imageUrl:
+                                "https://is1-ssl.mzstatic.com/image/thumb/Purple126/v4/dd/34/c3/dd34c3e8-5c9f-51aa-a3eb-3a203f5fd49b/AppIcon-0-1x_U007emarketing-0-0-GLES2_U002c0-512MB-sRGB-0-0-0-85-220-0-0-0-10.png/292x0w.jpg",
+                            appTitle: "Complete Spoken English Course",
+                            appUrl:
+                                "https://apps.apple.com/us/app/complete-spoken-english-course/id1440118617",
+                          ),
                         ],
                       ),
                       SizedBox(width: SizeConfig.width(3)),
 
                       //Column4
-                      Column(
+                      const Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is4-ssl.mzstatic.com/image/thumb/Purple128/v4/bd/00/ee/bd00ee3b-43af-6b07-62a6-28c68373a8b5/AppIcon-1x_U007emarketing-85-220-0-9.png/292x0w.jpg",
-                              appTitle: "Happy Thanksgiving Day Greeting SMS",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/happy-merry_christmas-greeting-sms/id1435157874"),
+                            imageUrl:
+                                "https://is4-ssl.mzstatic.com/image/thumb/Purple128/v4/bd/00/ee/bd00ee3b-43af-6b07-62a6-28c68373a8b5/AppIcon-1x_U007emarketing-85-220-0-9.png/292x0w.jpg",
+                            appTitle: "Happy Thanksgiving Day Greeting SMS",
+                            appUrl:
+                                "https://apps.apple.com/us/app/happy-merry_christmas-greeting-sms/id1435157874",
+                          ),
                           Divider(),
                           /*AppStoreAppsItemWidget1(
                                   imageUrl:
@@ -1085,11 +1023,12 @@ class _HomePageState extends State<HomePage> {
                                       "https://apps.apple.com/us/app/egg-recipes-100-recipes-collection-for-eggetarian/id1232736881"),
                               Divider(),*/
                           AppStoreAppsItemWidget1(
-                              imageUrl:
-                                  "https://is1-ssl.mzstatic.com/image/thumb/Purple114/v4/0f/d6/f4/0fd6f410-9664-94a5-123f-38d787bf28c6/AppIcon-1x_U007emarketing-0-7-0-0-85-220.png/292x0w.jpg",
-                              appTitle: "Rakshabandhan Images Greetings",
-                              appUrl:
-                                  "https://apps.apple.com/us/app/rakshabandhan-images-greetings/id1523619788"),
+                            imageUrl:
+                                "https://is1-ssl.mzstatic.com/image/thumb/Purple114/v4/0f/d6/f4/0fd6f410-9664-94a5-123f-38d787bf28c6/AppIcon-1x_U007emarketing-0-7-0-0-85-220.png/292x0w.jpg",
+                            appTitle: "Rakshabandhan Images Greetings",
+                            appUrl:
+                                "https://apps.apple.com/us/app/rakshabandhan-images-greetings/id1523619788",
+                          ),
                         ],
                       ),
                     ],
@@ -1103,14 +1042,32 @@ class _HomePageState extends State<HomePage> {
       drawer: MyDrawer(),
     );
   }
+
+  @override
+  void moveToScreen(String s, [PassDataBetweenScreens? object]) {
+    // TODO: implement moveToScreen
+    debugPrint("Home Page: Move to Screen $s");
+    Navigator.of(context).pushNamed(s, arguments: object);
+  }
+
+  @override
+  void moveToScreenAfterAd(String s, [PassDataBetweenScreens? object]) {
+    // TODO: implement moveToScreenAfterAd
+    debugPrint("Home Page: Move to Screen After Ad $s");
+    Navigator.of(context).pushNamed(s, arguments: object);
+  }
+
+  @override
+  void showAd(String s, [PassDataBetweenScreens? object]) {
+    // TODO: implement showAd
+    debugPrint("Home Page: Showing Ad Now");
+    AdManager.instance.showInterstitialAd(s, object);
+  }
 }
 
 class DesignerContainer extends StatelessWidget {
-  const DesignerContainer({
-    Key? key,
-    required this.child,
-    required this.isLeft,
-  }) : super(key: key);
+  const DesignerContainer({Key? key, required this.child, required this.isLeft})
+    : super(key: key);
 
   final Widget child;
   final bool isLeft;
@@ -1124,9 +1081,12 @@ class DesignerContainer extends StatelessWidget {
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(SizeConfig.height(20)),
               ),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                    offset: Offset(0, 0), blurRadius: 4, color: Colors.grey),
+                  offset: Offset(0, 0),
+                  blurRadius: 4,
+                  color: Colors.grey,
+                ),
               ],
             )
           : BoxDecoration(
@@ -1134,129 +1094,15 @@ class DesignerContainer extends StatelessWidget {
               borderRadius: BorderRadius.only(
                 bottomRight: Radius.circular(SizeConfig.height(20)),
               ),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                    offset: Offset(0, 0), blurRadius: 4, color: Colors.grey),
+                  offset: Offset(0, 0),
+                  blurRadius: 4,
+                  color: Colors.grey,
+                ),
               ],
             ),
       child: child,
-    );
-  }
-}
-
-class CustomHeader1 extends StatelessWidget {
-  const CustomHeader1({
-    Key? key,
-    this.headerText,
-    this.imagePath,
-    this.descriptionText,
-  }) : super(key: key);
-
-  final String? headerText, imagePath, descriptionText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: 3 * SizeConfig.widthMultiplier,
-        bottom: 10 * SizeConfig.widthMultiplier,
-        left: 10 * SizeConfig.widthMultiplier,
-        right: 10 * SizeConfig.widthMultiplier,
-      ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryVariant,
-        borderRadius: BorderRadius.only(
-          //30
-          bottomRight: Radius.circular(MediaQuery.of(context).size.width),
-        ),
-      ),
-      child: Column(
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    headerText!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1!
-                        .copyWith(color: Colors.white),
-                  ),
-                  SizedBox(
-                    width: 1.93 * SizeConfig.widthMultiplier,
-                  ),
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(imagePath!),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 2 * SizeConfig.heightMultiplier,
-          ),
-          Text(
-            descriptionText!,
-            textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .subtitle1!
-                .copyWith(color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class AppStoreAppsItemWidget1 extends StatelessWidget {
-  const AppStoreAppsItemWidget1({
-    Key? key,
-    this.imageUrl,
-    this.appUrl,
-    this.appTitle,
-  }) : super(key: key);
-
-  final String? imageUrl, appUrl, appTitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          ClipRRect(
-            borderRadius:
-                BorderRadius.all(Radius.circular(SizeConfig.width(16))),
-            child: Padding(
-              padding: EdgeInsets.only(right: SizeConfig.width(3)),
-              child: CachedNetworkImage(
-                height: SizeConfig.height(80),
-                width: SizeConfig.width(80),
-                imageUrl: imageUrl!,
-                placeholder: (context, url) =>
-                    const CircularProgressIndicator(),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-                fadeOutDuration: const Duration(seconds: 1),
-                fadeInDuration: const Duration(seconds: 3),
-              ),
-            ),
-          ),
-          Text(
-            appTitle!,
-            style: Theme.of(context)
-                .textTheme
-                .bodyText1!
-                .copyWith(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-      onTap: () {
-        launch(appUrl!);
-      },
     );
   }
 }

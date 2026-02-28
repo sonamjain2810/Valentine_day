@@ -1,7 +1,7 @@
 class Quotes {
   Quotes._();
 
-  static const quotes_data = [
+  static const quotesData = [
 "“Love is the greatest refreshment in life.” – Pablo Picasso, Artist"
      ,
 "“Where there is love, there is life.” – Mahatma Ghandi, Civil Rights Leader"

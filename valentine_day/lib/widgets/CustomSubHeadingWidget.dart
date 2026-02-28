@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/utils/SizeConfig.dart';
+import '../utils/SizeConfig.dart';
 
 class CustomSubHeadingWidget extends StatelessWidget {
   const CustomSubHeadingWidget({
@@ -17,7 +17,7 @@ class CustomSubHeadingWidget extends StatelessWidget {
         child: Row(children: [
           Text(
             "---",
-            style: Theme.of(context).textTheme.subtitle2!.copyWith(
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -25,7 +25,7 @@ class CustomSubHeadingWidget extends StatelessWidget {
             title!,
             style: Theme.of(context)
                 .textTheme
-                .subtitle1!
+                .bodySmall!
                 .copyWith(fontWeight: FontWeight.w700),
           ),
         ]),
